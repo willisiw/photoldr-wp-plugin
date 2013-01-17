@@ -1,0 +1,20 @@
+.form-item
+{
+    float:left;
+    width: 960px;
+    margin-left: 50px;
+    margin-top: 20px;
+}
+.labels
+{
+    display:block;
+    font-weight: bold;
+}
+
+.recaptcha
+{
+    float:left;
+    width: 960px;
+    margin-left: 50px;
+    margin-top: 20px;
+}
