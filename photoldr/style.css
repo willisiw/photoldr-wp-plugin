@@ -11,10 +11,12 @@
     font-weight: bold;
 }
 
-.recaptcha
+.xml a
 {
-    float:left;
-    width: 960px;
-    margin-left: 50px;
-    margin-top: 20px;
+    text-decoration: none;
+}
+
+.xml a:hover
+{
+    color:#18599B;
 }
