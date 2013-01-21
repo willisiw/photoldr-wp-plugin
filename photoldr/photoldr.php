@@ -153,12 +153,6 @@ function generateXML() {
   $post_types = get_post_types();  
   $totaluser  = get_users(); 
   $coutuser   = count($totaluser);
-  $allpost    = get_posts();
-  $countpost  = count($allpost);
-  $allpages   = get_pages();
-  $countpages = count($allpages);
-  
-  $coutnode   = $countpost+$countpages;
   
   $exp_date = get_option('Expiration Date', date("Y-m-d", strtotime('+3 year')));
   
@@ -173,7 +167,7 @@ function generateXML() {
   $pub['exp_date'] = date("Y-m-d", strtotime($exp_date));
   $pub['exp_url'] = get_option('FQDN', $_SERVER['HTTP_HOST']);
   $pub['post_url'] = "http://" . $pub['FQDN'] . "/?q=photoldr.php";
-  
+  //echo "<pre>";print_r($pub);exit;
   // <app_options> exposes site specific options for user settings
   // in the iOS app.
   $pub['app_options'][1] = "app:Username:username:textfield:";
@@ -209,24 +203,26 @@ function generateXML() {
                      }
                  echo"</app_options>";
                  
-                 echo"<form_items>\n";                 
-                   echo "<option>";echo 'article'.':'.'Title'.':'.'title'.':'.'textfield';echo "</option>";
-                   echo "<option>";echo 'article'.':'.'Body'.':'.'body'.':'.'textarea';echo "</option>";
-                   echo "<option>";echo 'article'.':'.'Image'.':'.'field_image'.':'.'image';echo "</option>";
-                   echo "<option>";echo 'article'.':'.'Replace Photos'.':'.'image_overwrite'.':'.'checkbox';echo "</option>";
-                   echo "<option>";echo 'page'.':'.'Title'.':'.'title'.':'.'textfield';echo "</option>";
-                   echo "<option>";echo 'page'.':'.'Body'.':'.'body'.':'.'textarea';echo "</option>";
-                   echo "<option>";echo 'blog'.':'.'Title'.':'.'title'.':'.'textfield';echo "</option>";
-                   echo "<option>";echo 'blog'.':'.'Body'.':'.'body'.':'.'textarea';echo "</option>";                     
+                 echo"<form_items>\n";  
+                 foreach($post_types as $type)
+                     {
+                       echo "<option>";echo $type.':'.'Title'.':'.'title'.':'.'textfield'.':'.'#required';echo "</option>";
+                       echo "<option>";echo $type.':'.'Body'.':'.'body'.':'.'textarea';echo "</option>";                       
+                     }
                  echo"</form_items>";
                  
+                 $countnode = 0;
                echo"<node_types>\n";  
                     foreach($post_types as $type)
                      {                     
                          echo "<option>";
                          echo $type .":table" ;
                          echo "</option>";
+                         
+                         $allpost    = new WP_Query("post_type=$type");                        
+                         $countnode += count($allpost->posts);
                      }
+                    
                echo"</node_types>";
                echo"<name/>";
                echo"<email/>";
@@ -252,78 +248,125 @@ function generateXML() {
                    }
                echo"</user>";
                
-               echo"<nodes  count='$coutnode'>\n"; 
-                   for($k=0;$k<$countpost;$k++)
-                   {
+               echo"<nodes  count='$countnode'>\n"; 
+               
+               foreach ($post_types as $value)
+               {    
+                    $allpost   = new WP_Query("post_type=$value");
+                    //$value     = $value.'s'; 
+                    $postw     = $allpost->posts;
+                    foreach ($postw as $key)
+                      {
+                           $arg     = array('post_id' =>"$key->ID",'orderby' => 'id','order' => 'DESC');
+                           $comment = get_comments($arg);
+                           
                          echo "<node>\n";
+                           echo "<userdelete>";
+                           echo "0";
+                           echo "</userdelete>";
+                           
+                           echo "<useredit>";
+                           echo "0";
+                           echo "</useredit>";
+                           
                            echo "<vid>";
-                           echo $allpost[$k]->ID;
+                           echo "0";
                            echo "</vid>";
+                           
                            echo "<uid>";
-                           echo $allpost[$k]->post_author;
+                           echo $key->post_author;
                            echo "</uid>";
+                           
                            echo "<title>";
-                           echo $allpost[$k]->post_title;
+                           echo $key->post_title;
                            echo "</title>";
+                           
+                           echo "<log/>";
+                           
                            echo "<status>";
-                           echo $allpost[$k]->post_status;
+                           echo $key->post_status;
                            echo "</status>";
+                           
                            echo "<comment>";
-                           echo $allpost[$k]->comment_count;
+                           echo $key->comment_count;
                            echo "</comment>";
+                           
+                           echo "<promote>";
+                           echo "0";
+                           echo "</promote>";
+                           
+                           echo "<sticky>";
+                           echo "0";
+                           echo "</sticky>";
+                           
                            echo "<nid>";
-                           echo $allpost[$k]->ID;
+                           echo $key->ID;
                            echo "</nid>";
+                           
                            echo "<type>";
-                           echo $allpost[$k]->post_type;
+                           echo $key->post_type;
                            echo "</type>";
+                           
+                           echo "<language/>";
+                           
                            echo "<created>";
-                           echo $allpost[$k]->post_date;
+                           echo $key->post_date;
                            echo "</created>";
+                           
                            echo "<changed>";
-                           echo $allpost[$k]->post_modified;
+                           echo $key->post_modified;
                            echo "</changed>";
+                           
+                           echo "<tnid>";
+                           echo "0";
+                           echo "</tnid>";
+                           
+                           echo "<translate>";
+                           echo "0";
+                           echo "</translate>";
+                           
+                           echo "<revision_timestamp>";
+                           echo "0";
+                           echo "</revision_timestamp>";
+                           
+                           echo "<revision_uid>";
+                           echo "0";
+                           echo "</revision_uid>";
+                           
                            echo "<body>";
-                           echo $allpost[$k]->post_content;
+                           echo $key->post_content;
                            echo "</body>";
+                           
+                           echo "<cid>";
+                           echo $comment[0]->comment_ID;
+                           echo "</cid>";
+                           
+                           echo "<last_comment_timestamp>";
+                           echo $comment[0]->comment_date;
+                           echo "</last_comment_timestamp>";
+                           
+                           echo "<last_comment_name/>";
+                           
+                           echo "<last_comment_uid>";
+                           echo $comment[0]->user_id;
+                           echo "</last_comment_uid>";
+                           
+                           echo "<comment_count>";
+                           echo $key->comment_count;
+                           echo "</comment_count>";
+                           
+                           echo "<name>";
+                           echo $comment[0]->comment_author;
+                           echo "</name>";
+                           
+                           echo "<picture>";
+                           echo "0";
+                           echo "</picture>";
+                           
                          echo "</node>";
                    }
-                   
-                  for($k=0;$k<$countpages;$k++)
-                   {
-                        echo "<node>\n";
-                           echo "<vid>";
-                           echo $allpages[$k]->ID;
-                           echo "</vid>";
-                           echo "<uid>";
-                           echo $allpages[$k]->post_author;
-                           echo "</uid>";
-                           echo "<title>";
-                           echo $allpages[$k]->post_title;
-                           echo "</title>";
-                           echo "<status>";
-                           echo $allpages[$k]->post_status;
-                           echo "</status>";
-                           echo "<comment>";
-                           echo $allpages[$k]->comment_count;
-                           echo "</comment>";
-                           echo "<nid>";
-                           echo $allpages[$k]->ID;
-                           echo "</nid>";
-                           echo "<type>";
-                           echo $allpages[$k]->post_type;
-                           echo "</type>";
-                           echo "<created>";
-                           echo $allpages[$k]->post_date;
-                           echo "</created>";
-                           echo "<changed>";
-                           echo $allpages[$k]->post_modified;
-                           echo "</changed>";
-                           echo "<body>";
-                           echo $allpages[$k]->post_title;
-                           echo "</body>";
-                        echo "</node>";
-                   }
+               } 
+                  
                echo"</nodes>";
 	echo '</domain>';
 	echo '</domains>';
