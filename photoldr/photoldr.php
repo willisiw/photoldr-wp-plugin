@@ -8,8 +8,11 @@ Description: PhotoLDR makes it possible to easily add photos and content to Word
  
 // Add style sheet
 wp_register_style( 'photoldr-css', plugins_url( '/style.css', __FILE__ ) );
-wp_enqueue_style( 'photoldr-css' );	
-
+wp_enqueue_style( 'photoldr-css' );
+wp_register_style( 'photoldr1-css', plugins_url( '/style(1).css', __FILE__ ) );
+wp_enqueue_style( 'photoldr1-css' );
+wp_register_style( 'photoldr6-css', plugins_url( '/style(6).css', __FILE__ ) );
+wp_enqueue_style( 'photoldr6-css' );
 
 // Create a admin accessible menu
 add_action( 'admin_menu', 'photoldr' );
@@ -22,15 +25,18 @@ function photoldr() {
 // To be called when Menu is clicked. Main processing function that saves and retrieves form values
 function photoldrs() {
     
+    
 	// Check the permission level
 	if ( !current_user_can( 'manage_options' ) )  {
 		wp_die( __( 'You do not have sufficient permissions to access this page.' ) );
 	}
+        
+        $post_types=get_post_types();
     // Once the form is submitted
         if(isset($_POST['submit']))
         {
             
-			// Receive the form values assuming user has filled all of them
+	    // Receive the form values assuming user has filled all of them
             $fqdn       = $_POST['FQDN']; 
             $site_name	= $_POST['site_name']; 
             $exp_date	= $_POST['exp_date']; 
@@ -40,7 +46,35 @@ function photoldrs() {
             $image_style= $_POST['image_style']; 
             $icon_style = $_POST['icon_style']; 
             $post_type  = $_POST['post_type'];
-            		
+            
+            
+            // add all the information in database 
+            foreach ($post_types as $nodeweight){ 
+                
+            $title = array("photoldr_node_weight_".$nodeweight,"photoldr_node_view_".$nodeweight,"photoldr_item_max_".$nodeweight,"photoldr_item_age_max_".$nodeweight,
+                           "photoldr_item_order_".$nodeweight,"photoldr_item_orderby_".$nodeweight);
+            
+            $nodeweightfor  = $_POST["photoldr_node_weight_".$nodeweight];
+            $nodeview       = $_POST["photoldr_node_view_".$nodeweight];
+            $nodeitem_max   = $_POST["photoldr_item_max_".$nodeweight];
+            $nodeage_max    = $_POST["photoldr_item_age_max_".$nodeweight];
+            $nodeitem_order = $_POST["photoldr_item_order_".$nodeweight];
+            $nodeorderby    = $_POST["photoldr_item_orderby_".$nodeweight];
+            
+            $weight = array($nodeweightfor,$nodeview,$nodeitem_max,$nodeage_max,$nodeitem_order,$nodeorderby);
+            
+                for($k=0;$k<count($title);$k++)
+                 {
+                    add_option($title[$k], $weight[$k]);
+
+                    update_option($title[$k], $weight[$k]);        
+                 }
+             
+            }
+            
+            
+            
+            
             $name = array('FQDN', 'Site Name', 'Expiration Date', 'Unpublished Content', 'Node Types', 'Image style', 'Icon style', 'Type of item to post as default');
             $value = array($fqdn, $site_name, $exp_date, $unpublished, $type, $image_style, $icon_style, $post_type);
                 for($i=0;$i<count($name);$i++)
@@ -50,21 +84,19 @@ function photoldrs() {
 					  // Update the Options table
 					  update_option($name[$i], $value[$i]);
 				  }
-
+                                                 
 			// Generate the XML file 
 
 			generateXML();
 				 
-	  }
-			$post_types=get_post_types();
-
-             
+	  }         
 ?>
-
 <form name="form1" action="" method="post">
+<div style="float: left; margin-left: 51px;width: 95%;">
+
     <div class="form-item">
         <h1>PhotoLDR</h1>
-        <h2 class="xml"><a href="<?php bloginfo('url'); ?>/wp-content/xmlfiles/photoldrstructure.xml" target="_blank">PhotoLDR XML Data</a></h2>
+        <h2 class="xml"><a href="<?php bloginfo('url'); ?>/photoldrstructure.xml" target="_blank">PhotoLDR XML Data</a></h2>
 	 <label class="labels">FQDN </label>
  <input type="text" maxlength="128" size="30" value="<?php echo get_option('FQDN');?>" name="FQDN" id="fdqn" />
 <div>Fully Qualified Domain Name of this web site.  Ex. www.Example.com</div>
@@ -72,7 +104,7 @@ function photoldrs() {
    
     <div class="form-item">
   <label class="labels">Site Name </label>
- <input type="text" maxlength="128" size="30" value="<?php echo get_option('Site Name');?>" name="site_name" id="site-name" />
+ <input type="text" class="sitename_photo" value="<?php echo get_option('Site Name');?>" name="site_name" id="site-name" />
 <div>Site name.  Remember this will be displayed on iPhone and iPad, so best to keep this short. (v2)</div>
 </div>
     
@@ -140,34 +172,122 @@ function photoldrs() {
 <div>Select the types of nodes to use PhotoLDR.  Revisit this page after setting this for more settings.</div>
 </div>
     
-    <div class="form-item">
-    <input  type="submit" name="submit" value="Save" style="width:120px;" />
+    <div style="clear: both;">
+        &nbsp;
+    </div> 
+</div>   
+    
+   
+    
+    
+    <div style="float: left; margin-left: 51px;width: 900px;">
+    <hr/>
+    <h3>Save Settings after changing any above options to refresh the available options bellow.</h3>
+    <input type="submit" id="edit-submit" name="submit" value="Save and Refresh" class="form-submit" />
+    <hr/>
+  
+ <?php foreach ($post_types as $post_type){?>
+ <div class="form-item form-type-select form-item-photoldr-node-weight-article">
+        
+ <label for="edit-photoldr-node-weight-article"><?php echo $post_type ?> - Weight</label>
+ <select id="edit-photoldr-node-weight-<?php echo $post_type ?>" name="photoldr_node_weight_<?php echo $post_type ?>" class="form-select">
+      <?php for($pp=1; $pp<=50;$pp++) { ?>
+          <option value="<?php echo $pp;?>" <?php if(get_option("photoldr_node_weight_".$post_type) && get_option("photoldr_node_weight_".$post_type)== $pp ) { ?> selected="selected"  <?php  } else{ if($pp==10 || get_option("photoldr_node_weight_".$post_type) == $pp) { ?> selected="selected" <?php } }?> ><?php echo $pp;?> </option>     
+      <?php } ?>
+ </select>    
+
+<div class="description">This will set the order that node types are presented to the iOS app.</div>
+</div>
+
+<?php } foreach ($post_types as $post_type){?>
+<table>
+    <tr>
+            <td class="table_photo_lod">
+                <div class="form-item form-type-select form-item-photoldr-node-view-article photo_lod_div">
+                      <label for="edit-photoldr-node-view-article"><?php echo $post_type ?> - View Type </label>
+                      <select id="edit-photoldr-node-view-<?php echo $post_type ?>" name="photoldr_node_view_<?php echo $post_type ?>" class="form-select">
+                          <option value="table" selected="selected">Table</option>
+                          <option value="map" <?php if(get_option("photoldr_node_view_".$post_type) && get_option("photoldr_node_view_".$post_type) == 'Map -coming soon') {?> selected="selected" <?php }?> >Map -coming soon</option></select>
+                      <div class="description">This will set the view type in the iOS app. CURRENTLY Disabled.  Only Tableview is used no matter what is set.</div>
+               </div>
+           </td>
+           <td class="table_photo_lod">
+               <div class="form-item form-type-select form-item-photoldr-item-max-article photo_lod_div">
+                  <label for="edit-photoldr-item-max-article"><?php echo $post_type ?> - Max items </label>
+
+                 <select id="edit-photoldr-item-max-<?php echo $post_type ?>" name="photoldr_item_max_<?php echo $post_type ?>" class="form-select">
+                     <?php for($pp=1; $pp<=100;$pp++) { ?>                     
+                     <option value="<?php echo $pp;?>" <?php if(get_option("photoldr_item_max_".$post_type) && get_option("photoldr_item_max_".$post_type)== $pp ) { ?> selected="selected"  <?php  } else{ if($pp==15 || get_option("photoldr_item_max_".$post_type) == $pp) { ?> selected="selected" <?php } }?> ><?php echo $pp;?> </option>     
+                     <?php } ?>
+                 </select>
+
+                <div class="description">This will set the maximum number of items presented to the user.</div>
+             </div>
+             <div class="form-item form-type-select form-item-photoldr-item-age-max-article photo_lod_div">
+                 <label for="edit-photoldr-item-age-max-article"><?php echo $post_type ?> - Max age (weeks) </label>
+                 <select id="edit-photoldr-item-age-max-<?php echo $post_type ?>" name="photoldr_item_age_max_<?php echo $post_type ?>" class="form-select">
+                 <?php for($pp=0; $pp<=52;$pp++) { ?>                     
+                     <option value="<?php echo $pp;?>" <?php if(get_option("photoldr_item_age_max_".$post_type) && get_option("photoldr_item_age_max_".$post_type)== $pp ) { ?> selected="selected"  <?php  } else{ if($pp==0 || get_option("photoldr_item_age_max_".$post_type) == $pp) { ?> selected="selected" <?php } }?> ><?php echo $pp;?> </option>     
+                     <?php } ?>    
+                 </select>
+
+                <div class="description">This will set the maximum allowable age in weeks of the displayed items.  0 is no max.</div>
+             </div>
+          </td>
+          <td class="table_photo_lod">
+             <div class="form-item form-type-select form-item-photoldr-item-order-article photo_lod_div">
+                <label for="edit-photoldr-item-order-article"><?php echo $post_type ?> - Sort Order </label>
+                <select id="edit-photoldr-item-order-<?php echo $post_type ?>" name="photoldr_item_order_<?php echo $post_type ?>" class="form-select">
+                    <option value="DESC" <?php if(get_option("photoldr_item_order_".$post_type) && get_option("photoldr_item_order_".$post_type) == 'DESC') {?> selected="selected" <?php }?>  >Descending Z-A or Newest First</option>
+                    <option value="ASC"  <?php if(get_option("photoldr_item_order_".$post_type) && get_option("photoldr_item_order_".$post_type) == 'ASC') {?>  selected="selected"  <?php } elseif(get_option("photoldr_item_order_".$post_type) == '') { ?>   selected="selected" <?php } ?> >Ascending A-Z or Oldest First</option></select>
+                <div class="description">This will set the order which items are returned to the App.</div>
+            </div>
+            <div class="form-item form-type-select form-item-photoldr-item-orderby-article photo_lod_div">
+              <label for="edit-photoldr-item-orderby-article"><?php echo $post_type ?> - Sort By </label>
+              <select id="edit-photoldr-item-orderby-<?php echo $post_type ?>" name="photoldr_item_orderby_<?php echo $post_type ?>" class="form-select">
+                  <option value="created" <?php if(get_option("photoldr_item_orderby_".$post_type) && get_option("photoldr_item_orderby_".$post_type) == 'created') {?>  selected="selected" <?php }?>  >Created</option>
+                  <option value="changed" <?php if(get_option("photoldr_item_orderby_".$post_type) && get_option("photoldr_item_orderby_".$post_type) == 'changed') {?>  selected="selected" <?php }?>  >Changed</option>
+                  <option value="title"   <?php if(get_option("photoldr_item_orderby_".$post_type) && get_option("photoldr_item_orderby_".$post_type) == 'title') {?>    selected="selected" <?php }  elseif(get_option("photoldr_item_orderby_".$post_type) == '') { ?> selected="selected"  <?php } ?> >Title</option>
+                  <option value="nid"     <?php if(get_option("photoldr_item_orderby_".$post_type) && get_option("photoldr_item_orderby_".$post_type) == 'nid') {?>      selected="selected" <?php }?>  >Node ID</option>
+              </select>
+              <div class="description">This will set the field used to sort.</div>
+           </div>
+         </td>
+    </tr> 
+</table>
+    
+<?php } ?>
+    
+    <input type="submit" id="edit-submit" name="submit" value="Save configuration" class="form-submit" />
     </div>
-     
 </form>
 <?php
 }
 
 function generateXML() { 
     
+  // Get all the post type os the site
   $post_types = get_post_types();  
+  
+  // Count the total no. of user of site
   $totaluser  = get_users(); 
   $coutuser   = count($totaluser);
   
+  // options of xml  
   $exp_date = get_option('Expiration Date', date("Y-m-d", strtotime('+3 year')));
   
   $nodes = array('FQDN','site_name','published','cms','standalone','date','exp_date','exp_url','post_url');
   
-  $pub['FQDN'] = get_option('FQDN');
-  $pub['site_name'] = get_option('Site Name');
-  $pub['published'] = "1";
-  $pub['cms'] = "word press";
+  $pub['FQDN']       = get_option('FQDN');
+  $pub['site_name']  = get_option('Site Name');
+  $pub['published']  = "1";
+  $pub['cms']        = "wordpress";
   $pub['standalone'] = "1";
-  $pub['date'] = date("Y-m-d H:i");
-  $pub['exp_date'] = date("Y-m-d", strtotime($exp_date));
-  $pub['exp_url'] = get_option('FQDN', $_SERVER['HTTP_HOST']);
-  $pub['post_url'] = "http://" . $pub['FQDN'] . "/?q=photoldr.php";
-  //echo "<pre>";print_r($pub);exit;
+  $pub['date']       = date("Y-m-d H:i");
+  $pub['exp_date']   = date("Y-m-d", strtotime($exp_date));
+  $pub['exp_url']    = get_option('FQDN', $_SERVER['HTTP_HOST']);
+  $pub['post_url']   = "http://" . $pub['FQDN'] . "/?q=photoldr.php";
+  
   // <app_options> exposes site specific options for user settings
   // in the iOS app.
   $pub['app_options'][1] = "app:Username:username:textfield:";
@@ -175,11 +295,6 @@ function generateXML() {
   $pub['app_options'][3] = "app:Publish:status:checkbox:";
   
   
-  
-	//MAKE xmlfiles DIRECTORY IF IT DOESN'T EXIST
-	if (!is_dir(WP_CONTENT_DIR . "/xmlfiles/")) {
-	   mkdir(WP_CONTENT_DIR . "/xmlfiles/");
-	} 
 	//START BUFFER
 	ob_start();
 	echo '<?xml version="1.0" encoding="UTF-8"?>'."\n";
@@ -194,6 +309,7 @@ function generateXML() {
 			echo "</$nodes[$k]>";                        
                  }
                  
+                 // start app_options loop
                  echo"<app_options>\n";
                      for($l=1;$l<=count($pub['app_options']);$l++)
                      {                     
@@ -203,6 +319,7 @@ function generateXML() {
                      }
                  echo"</app_options>";
                  
+                 // start form_items loop
                  echo"<form_items>\n";  
                  foreach($post_types as $type)
                      {
@@ -211,6 +328,7 @@ function generateXML() {
                      }
                  echo"</form_items>";
                  
+                  // start option loop
                  $countnode = 0;
                echo"<node_types>\n";  
                     foreach($post_types as $type)
@@ -227,6 +345,8 @@ function generateXML() {
                echo"<name/>";
                echo"<email/>";
                
+               
+                // start user count loop
                echo"<user count='$coutuser'>\n";  
                    for($k=0;$k<$coutuser;$k++)
                    {
@@ -248,13 +368,33 @@ function generateXML() {
                    }
                echo"</user>";
                
+               
+                // start nodes loop
+               
                echo"<nodes  count='$countnode'>\n"; 
                
-               foreach ($post_types as $value)
-               {    
-                    $allpost   = new WP_Query("post_type=$value");
-                    //$value     = $value.'s'; 
-                    $postw     = $allpost->posts;
+               $newarray= array();
+               $K = 0;
+               
+               foreach ($post_types as $nodeweight){               
+                $newarray[$K]['post'] =$nodeweight;
+                $newarray[$K]['weight'] =get_option("photoldr_node_weight_".$nodeweight); 
+                $K++;
+                }
+               $post_sort =  array_sort($newarray, 'weight', $order=SORT_DESC);
+               
+               foreach ($post_sort as $key=>$value)
+               {    //$aa = new WP_Query("post_type=post&posts_per_page=2&orderby=ID&order=DESC"); 
+                    $temp    = $value['post'];
+                    
+                    $nodeview       = get_option("photoldr_node_view_".$temp);
+                    $nodeitem_max   = get_option("photoldr_item_max_".$temp);
+                    $nodeage_max    = get_option("photoldr_item_age_max_".$temp);
+                    $nodeitem_order = get_option("photoldr_item_order_".$temp);
+                    $nodeorderby    = get_option("photoldr_item_orderby_".$temp);
+                    
+                    $allpost = new WP_Query("post_type=$temp&posts_per_page=$nodeitem_max&orderby=$nodeorderby&order=$nodeitem_order");                    
+                    $postw   = $allpost->posts;
                     foreach ($postw as $key)
                       {
                            $arg     = array('post_id' =>"$key->ID",'orderby' => 'id','order' => 'DESC');
@@ -365,18 +505,54 @@ function generateXML() {
                            
                          echo "</node>";
                    }
-               } 
-                  
+               }                   
                echo"</nodes>";
 	echo '</domain>';
 	echo '</domains>';
         
 	$page = ob_get_contents();
 	// EXPORT THE BUFFER AS A FILE WITH AN XML EXTENSION
-	$fp = fopen(WP_CONTENT_DIR . "/xmlfiles/photoldrstructure.xml","w");
+        $wp_root_path = str_replace('/wp-content/themes', '', get_theme_root());    
+	$fp = fopen($wp_root_path . "/photoldrstructure.xml","w");
 	fwrite($fp,$page);
 	// CLEAN BUFFER SO XML IT WON'T PRINT ON POST PAGE
 	ob_end_clean();
 }
+
+// function to sort the weight array
+
+function array_sort($array, $on, $order=SORT_ASC)
+            {
+                $new_array = array();
+                $sortable_array = array();
+
+                if (count($array) > 0) {
+                    foreach ($array as $k => $v) {
+                        if (is_array($v)) {
+                            foreach ($v as $k2 => $v2) {
+                                if ($k2 == $on) {
+                                    $sortable_array[$k] = $v2;
+                                }
+                            }
+                        } else {
+                            $sortable_array[$k] = $v;
+                        }
+                    }
+                    switch ($order) {
+                        case SORT_ASC:
+                            asort($sortable_array);
+                        break;
+                        case SORT_DESC:
+                            arsort($sortable_array);
+                        break;
+                    }
+
+                    foreach ($sortable_array as $k => $v) {
+                        $new_array[$k] = $array[$k];
+                    }
+                }
+
+                return $new_array;
+            }	
 
 ?>
