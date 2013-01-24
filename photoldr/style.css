@@ -1,22 +1,41 @@
-.form-item
-{
-    float:left;
-    width: 960px;
-    margin-left: 50px;
-    margin-top: 20px;
-}
-.labels
-{
-    display:block;
-    font-weight: bold;
-}
-
-.xml a
-{
-    text-decoration: none;
-}
-
-.xml a:hover
-{
-    color:#18599B;
+.form-item
+{
+    float:left;
+    width: 960px;
+    
+    margin-top: 20px;
+}
+.labels
+{
+    display:block;
+    font-weight: bold;
+}
+
+.xml a
+{
+    text-decoration: none;
+}
+
+.xml a:hover
+{
+    color:#18599B;
+}
+.sitename_photo
+{
+    font-size: 13px;
+    height: 30px;
+    width: 180px;
+}
+.xml
+{
+     margin: 20px 0;
+}
+.photo_lod_div
+{
+     width: 235px;
+}
+.table_photo_lod
+{
+    float: left;
+    width: 250px;
 }

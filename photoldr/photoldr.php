@@ -17,6 +17,21 @@ wp_enqueue_style( 'photoldr6-css' );
 // Create a admin accessible menu
 add_action( 'admin_menu', 'photoldr' );
 
+// create a action so that xml can be genrate
+add_action('template_redirect','photoldr_check_url');
+
+function photoldr_check_url()  { 
+ $pagePath   = $_SERVER["REQUEST_URI"]; 
+ if(strchr($pagePath,'photoldrstructure.xml')) {    
+  // Generate the XML file 
+   generateXML();
+ }
+ if(strchr($pagePath,'photoldr.php')) {    
+  photoldr_postdata();
+ }
+ 
+ return; 
+}
 
 function photoldr() {
 	add_options_page( 'Photoldr', 'PhotoLDR', 'manage_options', 'photoldr', 'photoldrs' );
@@ -24,7 +39,6 @@ function photoldr() {
 
 // To be called when Menu is clicked. Main processing function that saves and retrieves form values
 function photoldrs() {
-    
     
 	// Check the permission level
 	if ( !current_user_can( 'manage_options' ) )  {
@@ -83,13 +97,10 @@ function photoldrs() {
 					  add_option($name[$i], $value[$i]);
 					  // Update the Options table
 					  update_option($name[$i], $value[$i]);
-				  }
-                                                 
-			// Generate the XML file 
-
-			generateXML();
-				 
-	  }         
+				  }                                                 
+						 
+	  } 
+          
 ?>
 <form name="form1" action="" method="post">
 <div style="float: left; margin-left: 51px;width: 95%;">
@@ -192,7 +203,7 @@ function photoldrs() {
  <label for="edit-photoldr-node-weight-article"><?php echo $post_type ?> - Weight</label>
  <select id="edit-photoldr-node-weight-<?php echo $post_type ?>" name="photoldr_node_weight_<?php echo $post_type ?>" class="form-select">
       <?php for($pp=1; $pp<=50;$pp++) { ?>
-          <option value="<?php echo $pp;?>" <?php if(get_option("photoldr_node_weight_".$post_type) && get_option("photoldr_node_weight_".$post_type)== $pp ) { ?> selected="selected"  <?php  } else{ if($pp==10 || get_option("photoldr_node_weight_".$post_type) == $pp) { ?> selected="selected" <?php } }?> ><?php echo $pp;?> </option>     
+          <option value="<?php echo $pp;?>" <?php if(get_option("photoldr_node_weight_".$post_type) && get_option("photoldr_node_weight_".$post_type)== $pp ) { ?> selected="selected"  <?php  } else{ if(get_option("photoldr_node_weight_".$post_type)=='') { if($pp==10) { ?> selected="selected" <?php } }} ?> ><?php echo $pp;?> </option>     
       <?php } ?>
  </select>    
 
@@ -217,7 +228,7 @@ function photoldrs() {
 
                  <select id="edit-photoldr-item-max-<?php echo $post_type ?>" name="photoldr_item_max_<?php echo $post_type ?>" class="form-select">
                      <?php for($pp=1; $pp<=100;$pp++) { ?>                     
-                     <option value="<?php echo $pp;?>" <?php if(get_option("photoldr_item_max_".$post_type) && get_option("photoldr_item_max_".$post_type)== $pp ) { ?> selected="selected"  <?php  } else{ if($pp==15 || get_option("photoldr_item_max_".$post_type) == $pp) { ?> selected="selected" <?php } }?> ><?php echo $pp;?> </option>     
+                     <option value="<?php echo $pp;?>" <?php if(get_option("photoldr_item_max_".$post_type)== $pp ) { ?> selected="selected"  <?php  } else{ if(get_option("photoldr_item_max_".$post_type)=='') {if($pp==15) { ?> selected="selected" <?php } } }?> ><?php echo $pp;?> </option>
                      <?php } ?>
                  </select>
 
@@ -227,7 +238,7 @@ function photoldrs() {
                  <label for="edit-photoldr-item-age-max-article"><?php echo $post_type ?> - Max age (weeks) </label>
                  <select id="edit-photoldr-item-age-max-<?php echo $post_type ?>" name="photoldr_item_age_max_<?php echo $post_type ?>" class="form-select">
                  <?php for($pp=0; $pp<=52;$pp++) { ?>                     
-                     <option value="<?php echo $pp;?>" <?php if(get_option("photoldr_item_age_max_".$post_type) && get_option("photoldr_item_age_max_".$post_type)== $pp ) { ?> selected="selected"  <?php  } else{ if($pp==0 || get_option("photoldr_item_age_max_".$post_type) == $pp) { ?> selected="selected" <?php } }?> ><?php echo $pp;?> </option>     
+                     <option value="<?php echo $pp;?>" <?php if(get_option("photoldr_item_age_max_".$post_type) && get_option("photoldr_item_age_max_".$post_type)== $pp ) { ?> selected="selected"  <?php  } else{  if(get_option("photoldr_item_age_max_".$post_type)=='') { if($pp==0) { ?> selected="selected" <?php } } }?> ><?php echo $pp;?> </option>     
                      <?php } ?>    
                  </select>
 
@@ -265,8 +276,13 @@ function photoldrs() {
 }
 
 function generateXML() { 
+  
+   
+  // Authenticate the user. & getting uid
     
-  // Get all the post type os the site
+   $uid = photoldr_user_auth();
+     
+  // Get all the post type os the site               
   $post_types = get_post_types();  
   
   // Count the total no. of user of site
@@ -295,8 +311,8 @@ function generateXML() {
   $pub['app_options'][3] = "app:Publish:status:checkbox:";
   
   
-	//START BUFFER
-	ob_start();
+	
+        header('Content-type: text/xml');
 	echo '<?xml version="1.0" encoding="UTF-8"?>'."\n";
         echo "<domains src='photoldr_node_structure_page'>\n"; 
 	echo "<domain>\n"; 
@@ -323,6 +339,11 @@ function generateXML() {
                  echo"<form_items>\n";  
                  foreach($post_types as $type)
                      {
+                        $useredit = check_role($uid,$type);                        
+                       if($useredit)
+                       {
+                           echo "<option>";echo $type.':Hidden:posturl:'.$pub['post_url'];echo "</option>\n";
+                       }
                        echo "<option>";echo $type.':'.'Title'.':'.'title'.':'.'textfield'.':'.'#required';echo "</option>";
                        echo "<option>";echo $type.':'.'Body'.':'.'body'.':'.'textarea';echo "</option>";                       
                      }
@@ -337,7 +358,12 @@ function generateXML() {
                          echo $type .":table" ;
                          echo "</option>";
                          
-                         $allpost    = new WP_Query("post_type=$type");                        
+                         $querytype = array(
+                            'post_type' => $type,                
+                            'post_status' => array('publish','trash') ,
+                        );
+                         
+                         $allpost    = new WP_Query($querytype);                        
                          $countnode += count($allpost->posts);
                      }
                     
@@ -384,31 +410,50 @@ function generateXML() {
                $post_sort =  array_sort($newarray, 'weight', $order=SORT_DESC);
                
                foreach ($post_sort as $key=>$value)
-               {    //$aa = new WP_Query("post_type=post&posts_per_page=2&orderby=ID&order=DESC"); 
-                    $temp    = $value['post'];
+               {    
+                    $posttype       = $value['post'];
                     
-                    $nodeview       = get_option("photoldr_node_view_".$temp);
-                    $nodeitem_max   = get_option("photoldr_item_max_".$temp);
-                    $nodeage_max    = get_option("photoldr_item_age_max_".$temp);
-                    $nodeitem_order = get_option("photoldr_item_order_".$temp);
-                    $nodeorderby    = get_option("photoldr_item_orderby_".$temp);
+                    $nodeview       = get_option("photoldr_node_view_".$posttype);
+                    $nodeitem_max   = get_option("photoldr_item_max_".$posttype);
+                    $nodeage_max    = get_option("photoldr_item_age_max_".$posttype);
+                    $nodeitem_order = get_option("photoldr_item_order_".$posttype);
+                    $nodeorderby    = get_option("photoldr_item_orderby_".$posttype);
                     
-                    $allpost = new WP_Query("post_type=$temp&posts_per_page=$nodeitem_max&orderby=$nodeorderby&order=$nodeitem_order");                    
+                    $querytype = array(
+                        'post_type' => $posttype,                
+                        'post_status' => array('publish','trash') ,
+                        'posts_per_page' => $nodeitem_max,                
+                        'orderby' => $nodeorderby,
+                        'order' => $nodeitem_order,
+                        
+                    );
+                    
+                    $allpost = new WP_Query($querytype);                    
                     $postw   = $allpost->posts;
                     foreach ($postw as $key)
                       {
                            $arg     = array('post_id' =>"$key->ID",'orderby' => 'id','order' => 'DESC');
                            $comment = get_comments($arg);
                            
+                       if($key->post_status=='trash')
+                       {
+                            echo "<unpublished_nodes>\n";
+                       }
+                       else
+                       {
                          echo "<node>\n";
+                       }
+                         $useredit = check_role($uid,$posttype);   
+                         if($useredit)
+                         {
                            echo "<userdelete>";
-                           echo "0";
+                           echo "1";
                            echo "</userdelete>";
                            
                            echo "<useredit>";
-                           echo "0";
+                           echo "1";
                            echo "</useredit>";
-                           
+                         } 
                            echo "<vid>";
                            echo "0";
                            echo "</vid>";
@@ -418,13 +463,19 @@ function generateXML() {
                            echo "</uid>";
                            
                            echo "<title>";
-                           echo $key->post_title;
+                           echo htmlspecialchars($key->post_title);
                            echo "</title>";
                            
                            echo "<log/>";
-                           
+                       
                            echo "<status>";
-                           echo $key->post_status;
+                       if($key->post_status=='trash')
+                       {
+                           echo '0';
+                       }
+                       else{
+                           echo '1';
+                       }
                            echo "</status>";
                            
                            echo "<comment>";
@@ -474,7 +525,7 @@ function generateXML() {
                            echo "</revision_uid>";
                            
                            echo "<body>";
-                           echo $key->post_content;
+                           echo htmlspecialchars($key->post_content);
                            echo "</body>";
                            
                            echo "<cid>";
@@ -502,31 +553,35 @@ function generateXML() {
                            echo "<picture>";
                            echo "0";
                            echo "</picture>";
-                           
-                         echo "</node>";
+                        
+                      if($key->post_status=='trash')
+                       {
+                            echo "</unpublished_nodes>\n";
+                       }
+                       else
+                       {
+                         echo "</node>\n";
+                       }
+                         
                    }
                }                   
                echo"</nodes>";
 	echo '</domain>';
 	echo '</domains>';
+        exit;     
         
-	$page = ob_get_contents();
-	// EXPORT THE BUFFER AS A FILE WITH AN XML EXTENSION
-        $wp_root_path = str_replace('/wp-content/themes', '', get_theme_root());    
-	$fp = fopen($wp_root_path . "/photoldrstructure.xml","w");
-	fwrite($fp,$page);
-	// CLEAN BUFFER SO XML IT WON'T PRINT ON POST PAGE
-	ob_end_clean();
 }
 
 // function to sort the weight array
 
 function array_sort($array, $on, $order=SORT_ASC)
-            {
+    {
+                // To sort an array two empty array
                 $new_array = array();
                 $sortable_array = array();
 
                 if (count($array) > 0) {
+                    // treversing the array 
                     foreach ($array as $k => $v) {
                         if (is_array($v)) {
                             foreach ($v as $k2 => $v2) {
@@ -538,6 +593,7 @@ function array_sort($array, $on, $order=SORT_ASC)
                             $sortable_array[$k] = $v;
                         }
                     }
+                    // Switch according to order ASC and DESC 
                     switch ($order) {
                         case SORT_ASC:
                             asort($sortable_array);
@@ -551,8 +607,241 @@ function array_sort($array, $on, $order=SORT_ASC)
                         $new_array[$k] = $array[$k];
                     }
                 }
-
+                // return sort array
                 return $new_array;
-            }	
+ }
+            
+            
+ // To check the role with access
+ function check_role($uid=null,$type=null)
+ {
+     
+     $user = new WP_User($uid);
+     
+     // Getting the role of the user
+     $caps  = get_user_meta($uid, 'wp_capabilities', true);
+     $roles = array_keys((array)$caps);
+     $roles = $roles[0]; 
+     
+     //access of the page
+     $access = 'edit_' . $type.'s';
+
+     // switch according to role with the access
+     switch ($roles)
+      {
+       case 'subscriber ':   
+         $usercreate = FALSE;
+         break;
+       case 'contributor':
+          if($user->has_cap($access)) 
+          {
+              $usercreate = TRUE;
+          }
+          else
+          {
+              $usercreate = FALSE;
+          }
+         break;
+       case 'author':
+         if($user->has_cap($access)) 
+          {
+              $usercreate = TRUE;
+          }
+          else
+          {
+              $usercreate = FALSE;
+          }
+         break;
+       case 'editor':
+         if($user->has_cap($access)) 
+          {
+              $usercreate = TRUE;
+          }
+          else
+          {
+              $usercreate = FALSE;
+          }
+         break;
+       case 'administrator': 
+         if($user->has_cap($access)) 
+          {
+              $usercreate = TRUE;
+          }
+          else
+          {
+              $usercreate = FALSE;
+          }          
+         break;
+     }
+     return $usercreate;
+  }
+  
+  function photoldr_postdata()
+  { 
+      global $language;
+      $langcode = isset($langcode) ? $langcode : $language->language;
+      $restrictedfields = array('pass', 'data', 'rdf_mapping', 'roles');
+
+      // Give the user feedback.  Accumulate througouht process.
+      $feed_user = "";
+
+      // Decide on Get or Post  Post preffered.
+      if (isset($_POST['username'])) {
+        $data = $_POST;
+      }
+      elseif (isset($_GET['username'])) {
+        $data = $_GET;
+      }
+      else {
+        return;
+      }
+      
+      $default_type = 'post';
+      $ntype        = isset($data['type']) ? $data['type'] : $default_type;
+      
+      $uid = photoldr_user_auth();
+      
+      if ($uid == FALSE) {    
+        return;
+      }
+      else { 
+        $account    = get_userdata($uid);
+        $capability = $account->allcaps;
+        
+       
+        
+       $access = 'edit_'.$ntype.'s';
+
+        if (array_key_exists($access, $capability)) {
+          $usercreate  = TRUE;
+          $usereditany = TRUE;
+        }
+        else {
+          $usercreate  = FALSE;
+          $usereditany = FALSE;
+        } 
+
+        $access = 'delete_' . $ntype .'s';
+        if (array_key_exists($access, $capability)) {
+          $userdeleteany = TRUE;
+        }
+        else {
+          $userdeleteany = FALSE;
+        }
+
+        if (!($usercreate)) {
+              echo 'access_denied';
+              print "<!doctype html><html><head><meta charset=\"UTF-8\"><title>Access Denied</title></head><body>Access Denied</body></html>";
+              return;
+            }            
+       }
+       
+       $type = get_post_types();  
+       
+       if (!isset($type[$ntype]))
+          {      
+              echo "$ntype is not a valid node type on this site.<br /> ".$_SERVER['REMOTE_HOST']."<br/>".$_SERVER["REMOTE_ADDR"];    
+              return;
+          }
+      
+      // Since we have a valid node type, decide if we are
+      // modifying or creating a node.
+      $nid = (isset($data['nid'])) ? $data['nid'] : 'new';
+      
+      // Load existing node by node id.
+      if ($nid != 'new') {
+
+        $node = get_post($nid);
+        if (!$node) {
+          // Could not load the nid, create a new node.
+          $nid = 'new';
+        }
+        elseif ($node->post_type != $ntype) {
+          // Node types do not match, so do not mangle
+          // the node, create a new node.
+          $nid = 'new';
+        }
+
+        if (($node->ID != $uid) && ($usereditany == FALSE)) {
+          // Only the owner of the node can modify it.
+          echo 'access_denied';
+          print "<!doctype html><html><head><meta charset=\"UTF-8\"><title>Access Denied</title></head><body>Access Denied</body></html>";
+          return;
+        }
+      }
+      
+      // Create blank node object in memory.
+      if ($nid == 'new') {
+        // Setup the node structure.
+        $node = new stdClass();
+
+        $node->nid = NULL;
+
+        // Insert new data.
+        $node->post_type = $ntype;
+        //node_object_prepare($node);
+        $node->post_author = $uid;
+        //$node->name = $account->data->user_nicename;
+        $node->post_status = 'publish';
+        $node->post_date_gmt = date("Y-m-d H:i");
+      }
+      
+      //echo "<pre>";print_r($data);exit;
+      // Loop through $data array and fill in the node values.
+      foreach ($data as $k => $v) {
+        if (is_array($v)) {
+          // If $v is an array, make it a string.
+          $v = implode('; ', $v);
+        }
+
+        switch($k) {      
+
+          case 'title':
+            $node->post_title = ($v) ? ($v) : $node->post_title;
+            break;
+
+          case 'body':
+            $node->post_content = isset($v) ? $v : $node->post_content;
+            break;
+
+            // END switch case.
+        }
+        // END foreach $data.
+      }
+
+      wp_insert_post($node);
+      
+      
+      
+  }
+  
+  
+  function photoldr_user_auth() {
+  $uid = FALSE;
+  if (isset($_POST['username'])) {
+    $data = $_POST;
+  }
+  elseif (isset($_GET['username'])) {
+    $data = $_GET;
+  }
+  else
+  {
+       $uid = get_current_user_id();
+  }
+
+  // Authenticate the user.
+  if (isset($data['username']) && isset($data['password'])) {
+    $usern = $data['username'];
+    $passw = $data['password'];
+    $data  = wp_authenticate($usern, $passw);
+    $uid   = $data->ID;
+  }
+  else {
+    $temp =  'No DATA moved from Post or Get.';
+  }
+  
+  return $uid;
+}
+  
 
 ?>
