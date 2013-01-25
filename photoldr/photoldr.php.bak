@@ -275,7 +275,8 @@ function photoldrs() {
 <?php
 }
 
-function generateXML() {  
+function generateXML() { 
+  
    
   // Authenticate the user. & getting uid
     
@@ -344,13 +345,7 @@ function generateXML() {
                            echo "<option>";echo $type.':Hidden:posturl:'.$pub['post_url'];echo "</option>\n";
                        }
                        echo "<option>";echo $type.':'.'Title'.':'.'title'.':'.'textfield'.':'.'#required';echo "</option>";
-                       echo "<option>";echo $type.':'.'Body'.':'.'body'.':'.'textarea';echo "</option>"; 
-                       
-                       if($type=='post' || $type=='page')
-                       {
-                           echo "<option>";echo $type.':'.'Image'.':'.'field_image'.':'.'image'.':'.'#2';echo "</option>";
-                           echo "<option>";echo $type.':'.'Replace Photos'.':'.'image_overwrite'.':'.'checkbox';echo "</option>"; 
-                       }
+                       echo "<option>";echo $type.':'.'Body'.':'.'body'.':'.'textarea';echo "</option>";                       
                      }
                  echo"</form_items>";
                  
@@ -682,7 +677,7 @@ function array_sort($array, $on, $order=SORT_ASC)
   }
   
   function photoldr_postdata()
-  {  
+  { 
       global $language;
       $langcode = isset($langcode) ? $langcode : $language->language;
       $restrictedfields = array('pass', 'data', 'rdf_mapping', 'roles');
@@ -700,7 +695,7 @@ function array_sort($array, $on, $order=SORT_ASC)
       else {
         return;
       }
-      //echo "<pre>";print_r($data);exit;
+      
       $default_type = 'post';
       $ntype        = isset($data['type']) ? $data['type'] : $default_type;
       
@@ -757,7 +752,6 @@ function array_sort($array, $on, $order=SORT_ASC)
       if ($nid != 'new') {
 
         $node = get_post($nid);
-        
         if (!$node) {
           // Could not load the nid, create a new node.
           $nid = 'new';
@@ -765,7 +759,7 @@ function array_sort($array, $on, $order=SORT_ASC)
         elseif ($node->post_type != $ntype) {
           // Node types do not match, so do not mangle
           // the node, create a new node.
-          $nid = 'new';          
+          $nid = 'new';
         }
 
         if (($node->ID != $uid) && ($usereditany == FALSE)) {
@@ -774,7 +768,6 @@ function array_sort($array, $on, $order=SORT_ASC)
           print "<!doctype html><html><head><meta charset=\"UTF-8\"><title>Access Denied</title></head><body>Access Denied</body></html>";
           return;
         }
-        
       }
       
       // Create blank node object in memory.
@@ -785,14 +778,15 @@ function array_sort($array, $on, $order=SORT_ASC)
         $node->nid = NULL;
 
         // Insert new data.
-        $node->post_type = $ntype;        
-        $node->post_author = $uid;        
+        $node->post_type = $ntype;
+        //node_object_prepare($node);
+        $node->post_author = $uid;
+        //$node->name = $account->data->user_nicename;
         $node->post_status = 'publish';
         $node->post_date_gmt = date("Y-m-d H:i");
-        $node->post_date     = date("Y-m-d H:i");
-        $node->post_modified = date("Y-m-d H:i");        
       }
       
+      //echo "<pre>";print_r($data);exit;
       // Loop through $data array and fill in the node values.
       foreach ($data as $k => $v) {
         if (is_array($v)) {
@@ -800,12 +794,8 @@ function array_sort($array, $on, $order=SORT_ASC)
           $v = implode('; ', $v);
         }
 
-        switch($k) {
-            
-          case 'status':
-            $node->post_status = ($v) ? 'publish' : $node->post_status;
-            break;
-            
+        switch($k) {      
+
           case 'title':
             $node->post_title = ($v) ? ($v) : $node->post_title;
             break;
@@ -817,138 +807,12 @@ function array_sort($array, $on, $order=SORT_ASC)
             // END switch case.
         }
         // END foreach $data.
-     }
-     
-     if($nid=='new')
-     {  
-      $nid       = wp_insert_post($node);
-     }
-     else{
-         $nid   = wp_update_post($node);
-         
-     }
-    
-      $countnode = 1;
-      
-      
-      if ($nid) { 
-          header('Content-type: text/xml');
-          echo '<?xml version="1.0" encoding="UTF-8"?>'."\n";
-          echo "<domains>\n"; 
-	  echo "<domain>\n";
-          echo "<nodes  count='$countnode'>\n"; 
-          echo "<node>\n";
-          
-          echo "<userdelete>";
-          echo "1";
-          echo "</userdelete>";
-                           
-          echo "<useredit>";
-          echo "1";
-          echo "</useredit>";
-          
-          echo "<vid>";
-          echo $nid;
-          echo "</vid>";
-          
-          echo "<uid>";
-          echo $uid;
-          echo "</uid>";
-          
-          echo "<title>";
-          echo htmlspecialchars($node->post_title);
-          echo "</title>";
-          
-          echo "<log/>";
-          
-          echo "<status>";
-          echo '1';
-          echo "</status>";
-          
-          echo "<comment>";
-          echo 0;
-          echo "</comment>";
-          
-          echo "<promote>";
-          echo "0";
-          echo "</promote>";
-          
-          echo "<sticky>";
-          echo "0";
-          echo "</sticky>";
-          
-          echo "<nid>";
-          echo $uid;
-          echo "</nid>";
-          
-          echo "<type>";
-          echo $node->post_type; 
-          echo "</type>";
-          
-          echo "<language/>";
-          
-          echo "<created>";
-          echo $node->post_date;
-          echo "</created>";
-          
-          echo "<changed>";
-          echo $node->post_modified;
-          echo "</changed>";
-          
-          echo "<tnid>";
-          echo "0";
-          echo "</tnid>";
-          
-          echo "<translate>";
-          echo "0";
-          echo "</translate>";
-          
-          echo "<revision_timestamp>";
-          echo date("Y-m-d H:i");
-          echo "</revision_timestamp>";
-          
-          echo "<revision_uid>";
-          echo "0";
-          echo "</revision_uid>";
-          
-          echo "<body>";
-          echo htmlspecialchars($node->post_content);
-          echo "</body>";
-          
-          echo "<cid>";
-          echo '0';
-          echo "</cid>";
-          
-          echo "<last_comment_timestamp>";
-          echo date("Y-m-d H:i");
-          echo "</last_comment_timestamp>";
-          
-          echo "<last_comment_name/>";
-          
-          echo "<last_comment_uid>";
-          echo $uid;
-          echo "</last_comment_uid>";
-          
-          echo "<comment_count>";
-          echo '0   ';
-          echo "</comment_count>";
-          
-          echo "<name>";
-          echo $data['username'];
-          echo "</name>";
-          
-          echo "<picture>";
-          echo "0";
-          echo "</picture>";
-          
-          echo "</node>";
-          echo "</nodes>";
-          
-        echo "</domain>"; 
-          
-        echo "</domains>";
       }
-      exit;
+
+      wp_insert_post($node);
+      
+      
+      
   }
   
   
@@ -978,5 +842,6 @@ function array_sort($array, $on, $order=SORT_ASC)
   
   return $uid;
 }
+  
 
 ?>
