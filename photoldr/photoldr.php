@@ -700,7 +700,7 @@ function array_sort($array, $on, $order=SORT_ASC)
       else {
         return;
       }
-      //echo "<pre>";print_r($data);exit;
+
       $default_type = 'post';
       $ntype        = isset($data['type']) ? $data['type'] : $default_type;
       
@@ -790,7 +790,7 @@ function array_sort($array, $on, $order=SORT_ASC)
         $node->post_status = 'publish';
         $node->post_date_gmt = date("Y-m-d H:i");
         $node->post_date     = date("Y-m-d H:i");
-        $node->post_modified = date("Y-m-d H:i");        
+        $node->post_modified = date("Y-m-d H:i");            
       }
       
       // Loop through $data array and fill in the node values.
@@ -819,9 +819,20 @@ function array_sort($array, $on, $order=SORT_ASC)
         // END foreach $data.
      }
      
+     
+     $images = photoldr_images_process($ntype, $uid);
+     
+     
+     
+     if(!empty($images))
+     {
+         $node->post_content .= $images;
+     }
+     
+     //insert into database if new otherwise update
      if($nid=='new')
      {  
-      $nid       = wp_insert_post($node);
+         $nid       = wp_insert_post($node);
      }
      else{
          $nid   = wp_update_post($node);
@@ -830,7 +841,7 @@ function array_sort($array, $on, $order=SORT_ASC)
     
       $countnode = 1;
       
-      
+      // Genrate XML to return 
       if ($nid) { 
           header('Content-type: text/xml');
           echo '<?xml version="1.0" encoding="UTF-8"?>'."\n";
@@ -951,7 +962,7 @@ function array_sort($array, $on, $order=SORT_ASC)
       exit;
   }
   
-  
+  //For genrating UID of user 
   function photoldr_user_auth() {
   $uid = FALSE;
   if (isset($_POST['username'])) {
@@ -975,8 +986,463 @@ function array_sort($array, $on, $order=SORT_ASC)
   else {
     $temp =  'No DATA moved from Post or Get.';
   }
-  
+  //Return UID 
   return $uid;
+}
+
+function photoldr_images_process($ntype, $uid) 
+{ 
+      $feed_user = "";
+      if (!isset($_FILES)) {
+        // No Files in _POST.
+        return;
+      }
+         $count = 0;
+          foreach ($_FILES as $k => $v) {
+            if (preg_match('/imag*/i', $k)) {
+              // Count Images in _POST.
+              $count++;
+            }
+          }
+          if ($count == 0) {
+            // No Images in POST.
+            return;
+          }
+          
+          $type   = $ntype;
+          $images = array();
+
+          // Set and Prepare the file directory.
+          $wp_root_path = str_replace('/wp-content/themes', '', get_theme_root()); 
+
+          $wp_root_paths = $wp_root_path."/postimg/";
+
+              if (!is_dir($wp_root_paths)) {
+                mkdir($wp_root_paths);
+            }
+            
+            $i = "0";
+          foreach ($_FILES as $k => $v) {
+            $src        = new stdClass();
+            $src->uri   = $v['tmp_name'];
+            $extensions = $v['type'];
+            $fuid       = str_pad((int) $uid, 6, "0", STR_PAD_LEFT);
+            $fdate      = date('Y-m-d-Hi');
+            $filename   = $type . '-' . $fuid . '-' . $fdate . '-' . $v['name']; 
+
+            $exten_img  = array('image/bmp','image/gif','image/jpg','image/png','image/psd','image/jpeg');
+            $validimg   = in_array($extensions, $exten_img);    
+
+             if($validimg)
+             {   
+                 //$url         = bloginfo('url') ;
+                 $filename    = file_munge($filename, $extensions, FALSE);
+                 //$destination = file_stream_wrapper_uri_normalize(bloginfo('url').'/postimg/' .$filename);                 
+                 $file_copy   = file_copy($src->uri, $wp_root_path.'/postimg/'.$filename, FILE_EXISTS_REPLACE);                 
+                 $images[$i]  = $file_copy.','.$type . ' image';         
+             }
+
+             $i++;
+          }
+          
+          $imgurl    = get_site_url()."/postimg/".$filename; 
+          $imagehtml =  "<img src='$imgurl'/>";
+          
+          return $imagehtml;
+}
+
+
+define('DS', DIRECTORY_SEPARATOR); // I always use this short form in my code.
+
+    function copy_r( $path, $dest )
+    {
+        if( is_dir($path) )
+        {
+            @mkdir( $dest );
+            $objects = scandir($path);
+            if( sizeof($objects) > 0 )
+            {
+                foreach( $objects as $file )
+                {
+                    if( $file == "." || $file == ".." )
+                        continue;
+                    // go on
+                    if( is_dir( $path.DS.$file ) )
+                    {
+                        copy_r( $path.DS.$file, $dest.DS.$file );
+                    }
+                    else
+                    {
+                        copy( $path.DS.$file, $dest.DS.$file );
+                    }
+                }
+            }
+            return true;
+        }
+        elseif( is_file($path) )
+        {
+            return copy($path, $dest);
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+
+function file_copy(&$source, $dest = 0, $replace = FILE_EXISTS_RENAME) {
+  $dest = file_create_path($dest);
+
+  $directory = $dest;
+  $basename = file_check_path($directory);
+
+  // Make sure we at least have a valid directory.
+  if ($basename === FALSE) {
+    $source = is_object($source) ? $source->filepath : $source;
+    echo "The selected file $source could not be uploaded, because the destination $dest is not properly configured.";    
+    return 0;
+  }
+
+  // Process a file upload object.
+  if (is_object($source)) {
+    $file = $source;
+    $source = $file->filepath;
+    if (!$basename) {
+      $basename = $file->filename;
+    }
+  }
+
+  $source = realpath($source);
+  if (!file_exists($source)) {
+    echo "The selected file $source could not be copied, because no file by that name exists. Please check that you supplied the correct filename.";
+    return 0;
+  }
+
+  // If the destination file is not specified then use the filename of the source file.
+  $basename = $basename ? $basename : basename($source);
+  $dest = $directory . '/' . $basename;
+
+  // Make sure source and destination filenames are not the same, makes no sense
+  // to copy it if they are. In fact copying the file will most likely result in
+  // a 0 byte file. Which is bad. Real bad.
+  if ($source != realpath($dest)) {
+    if (!$dest = file_destination($dest, $replace)) {
+      echo "The selected file $source could not be copied, because a file by that name already exists in the destination.";
+      return FALSE;
+    }
+
+    if (!@copy($source, $dest)) {
+      echo "The selected file $source could not be copied.";
+      return 0;
+    }
+
+    // Give everyone read access so that FTP'd users or
+    // non-webserver users can see/read these files,
+    // and give group write permissions so group members
+    // can alter files uploaded by the webserver.
+    @chmod($dest, 0664);
+  }
+
+  if (isset($file) && is_object($file)) {
+    $file->filename = $basename;
+    $file->filepath = $dest;
+    $source = $file;
+  }
+  else {
+    $source = $dest;
+  }
+
+  return 1; // Everything went ok.
+}
+
+function file_destination($destination, $replace) {
+  if (file_exists($destination)) {
+    switch ($replace) {
+      case FILE_EXISTS_RENAME:
+        $basename = basename($destination);
+        $directory = dirname($destination);
+        $destination = file_create_filename($basename, $directory);
+        break;
+
+      case FILE_EXISTS_ERROR:
+        echo "The selected file $destination could not be copied, because a file by that name already exists in the destination.";
+        return FALSE;
+    }
+  }
+  return $destination;
+}
+
+function file_create_filename($basename, $directory) {
+  $dest = $directory . '/' . $basename;
+
+  if (file_exists($dest)) {
+    // Destination file already exists, generate an alternative.
+    if ($pos = strrpos($basename, '.')) {
+      $name = substr($basename, 0, $pos);
+      $ext = substr($basename, $pos);
+    }
+    else {
+      $name = $basename;
+      $ext = '';
+    }
+
+    $counter = 0;
+    do {
+      $dest = $directory . '/' . $name . '_' . $counter++ . $ext;
+    } while (file_exists($dest));
+  }
+
+  return $dest;
+}
+
+function file_directory_path() {
+  return variable_get('file_directory_path', conf_path() . '/files');
+}
+
+function file_create_path($dest = 0) {
+  $file_path = file_directory_path();
+  if (!$dest) {
+    return $file_path;
+  }
+  // file_check_location() checks whether the destination is inside the Drupal files directory.
+  if (file_check_location($dest, $file_path)) {
+    return $dest;
+  }
+  // check if the destination is instead inside the Drupal temporary files directory.
+  else if (file_check_location($dest, file_directory_temp())) {
+    return $dest;
+  }
+  // Not found, try again with prefixed directory path.
+  else if (file_check_location($file_path . '/' . $dest, $file_path)) {
+    return $file_path . '/' . $dest;
+  }
+  // File not found.
+  return FALSE;
+}
+
+
+function file_check_location($source, $directory = '') {
+  $check = realpath($source);
+  if ($check) {
+    $source = $check;
+  }
+  else {
+    // This file does not yet exist
+    $source = realpath(dirname($source)) . '/' . basename($source);
+  }
+  $directory = realpath($directory);
+  if ($directory && strpos($source, $directory) !== 0) {
+    return 0;
+  }
+  return $source;
+}
+
+function file_directory_temp() {
+  $temporary_directory = variable_get('file_directory_temp', NULL);
+
+  if (is_null($temporary_directory)) {
+    $directories = array();
+
+    // Has PHP been set with an upload_tmp_dir?
+    if (ini_get('upload_tmp_dir')) {
+      $directories[] = ini_get('upload_tmp_dir');
+    }
+
+    // Operating system specific dirs.
+    if (substr(PHP_OS, 0, 3) == 'WIN') {
+      $directories[] = 'c:\\windows\\temp';
+      $directories[] = 'c:\\winnt\\temp';
+      $path_delimiter = '\\';
+    }
+    else {
+      $directories[] = '/tmp';
+      $path_delimiter = '/';
+    }
+
+    foreach ($directories as $directory) {
+      if (!$temporary_directory && is_dir($directory)) {
+        $temporary_directory = $directory;
+      }
+    }
+
+    // if a directory has been found, use it, otherwise default to 'files/tmp' or 'files\\tmp';
+    $temporary_directory = $temporary_directory ? $temporary_directory : file_directory_path() . $path_delimiter . 'tmp';
+    //variable_set('file_directory_temp', $temporary_directory);
+  }
+
+  return $temporary_directory;
+}
+
+function conf_path($require_settings = TRUE, $reset = FALSE) {
+  static $conf = '';
+
+  if ($conf && !$reset) {
+    return $conf;
+  }
+
+  $confdir = 'sites';
+  $uri = explode('/', $_SERVER['SCRIPT_NAME'] ? $_SERVER['SCRIPT_NAME'] : $_SERVER['SCRIPT_FILENAME']);
+  $server = explode('.', implode('.', array_reverse(explode(':', rtrim($_SERVER['HTTP_HOST'], '.')))));
+  for ($i = count($uri) - 1; $i > 0; $i--) {
+    for ($j = count($server); $j > 0; $j--) {
+      $dir = implode('.', array_slice($server, -$j)) . implode('.', array_slice($uri, 0, $i));
+      if (file_exists("$confdir/$dir/settings.php") || (!$require_settings && file_exists("$confdir/$dir"))) {
+        $conf = "$confdir/$dir";
+        return $conf;
+      }
+    }
+  }
+  $conf = "$confdir/default";
+  return $conf;
+}
+function file_check_path(&$path) {
+  // Check if path is a directory.
+  if (file_check_directory($path)) {
+    return '';
+  }
+
+  // Check if path is a possible dir/file.
+  $filename = basename($path);
+  $path = dirname($path);
+  if (file_check_directory($path)) {
+    return $filename;
+  }
+
+  return FALSE;
+}
+
+function file_check_directory(&$directory, $mode = 0, $form_item = NULL) {
+  $directory = rtrim($directory, '/\\');
+
+  // Check if directory exists.
+  if (!is_dir($directory)) {
+    if (($mode & FILE_CREATE_DIRECTORY) && @mkdir($directory)) {
+      echo "The directory $directory has been created.";
+      @chmod($directory, 0775); // Necessary for non-webserver users.
+    }
+    else {
+      if ($form_item) {
+        echo "The directory $directory does not exist.";
+      }
+      return FALSE;
+    }
+  }
+
+  // Check to see if the directory is writable.
+  if (!is_writable($directory)) {
+    if (($mode & FILE_MODIFY_PERMISSIONS) && @chmod($directory, 0775)) {
+      echo "The permissions of directory $directory have been changed to make it writable.";
+    }
+    else {
+      echo "The directory $directory is not writable";      
+      return FALSE;
+    }
+  }
+
+  if ((file_directory_path() == $directory || file_directory_temp() == $directory) && !is_file("$directory/.htaccess")) {
+    $htaccess_lines = "SetHandler Drupal_Security_Do_Not_Remove_See_SA_2006_006\nOptions None\nOptions +FollowSymLinks";
+    if (($fp = fopen("$directory/.htaccess", 'w')) && fputs($fp, $htaccess_lines)) {
+      fclose($fp);
+      chmod($directory . '/.htaccess', 0664);
+    }
+    /*else {
+      $variables = array(
+        '%directory' => $directory,
+        //'!htaccess' => '<br />' . nl2br(check_plain($htaccess_lines)),
+      );
+      form_set_error($form_item, t("Security warning: Couldn't write .htaccess file. Please create a .htaccess file in your %directory directory which contains the following lines: <code>!htaccess</code>", $variables));
+      watchdog('security', "Security warning: Couldn't write .htaccess file. Please create a .htaccess file in your %directory directory which contains the following lines: <code>!htaccess</code>", $variables, WATCHDOG_ERROR);
+    }*/
+  }
+
+  return TRUE;
+}
+
+function variable_set($name, $value) {
+  global $conf;
+
+  $serialized_value = serialize($value);
+  db_query("UPDATE {variable} SET value = '%s' WHERE name = '%s'", $serialized_value, $name);
+  if (!db_affected_rows()) {
+    @db_query("INSERT INTO {variable} (name, value) VALUES ('%s', '%s')", $name, $serialized_value);
+  }
+
+  cache_clear_all('variables', 'cache');
+
+  $conf[$name] = $value;
+}
+
+
+function variable_get($name, $default = NULL) { 
+  global $conf;
+
+  return isset($conf[$name]) ? $conf[$name] : $default;
+}
+
+
+
+function file_munge($filename, $extensions, $alerts = TRUE) { 
+  $original = $filename; 
+
+  // Allow potentially insecure uploads for very savvy users and admin
+  //if (!variable_get('allow_insecure_uploads', 0)) {
+    // Remove any null bytes. See http://php.net/manual/en/security.filesystem.nullbytes.php
+    $filename = str_replace(chr(0), '', $filename);
+
+    $whitelist = array_unique(explode(' ', trim($extensions)));
+
+    // Split the filename up by periods. The first part becomes the basename
+    // the last part the final extension.
+    $filename_parts  = explode('.', $filename);
+    $new_filename    = array_shift($filename_parts);  // Remove file basename.
+    $final_extension = array_pop($filename_parts); // Remove final extension.
+
+    // Loop through the middle parts of the name and add an underscore to the
+    // end of each section that could be a file extension but isn't in the list
+    // of allowed extensions.
+    foreach ($filename_parts as $filename_part) {
+      $new_filename .= '.' . $filename_part;
+      if (!in_array($filename_part, $whitelist) && preg_match("/^[a-zA-Z]{2,5}\d?$/", $filename_part)) {
+        $new_filename .= '_';
+      }
+    }
+    $filename = $new_filename . '.' . $final_extension;
+
+    if ($alerts && $original != $filename) {
+     echo 'For security reasons, your upload has been renamed to %filename.', array('%filename' => $filename);
+    }
+  //}
+
+  return $filename;
+}
+
+function file_stream_wrapper_uri_normalize($uri) {
+  $scheme = file_uri_scheme($uri);
+
+  if ($scheme) {
+    $target = file_uri_target($uri);
+
+    if ($target !== FALSE) {
+      $uri = $scheme . '://' . $target;
+    }
+  }
+  else {
+    // The default scheme is file://
+    $url = 'file://' . $uri;
+  }
+  return $uri;
+}
+
+function file_uri_target($uri) {
+  $data = explode('://', $uri, 2);
+
+  // Remove erroneous leading or trailing, forward-slashes and backslashes.
+  return count($data) == 2 ? trim($data[1], '\/') : FALSE;
+}
+
+function file_uri_scheme($uri) {
+  $position = strpos($uri, '://'); 
+  return $position ? substr($uri, 0, $position) : FALSE;
 }
 
 ?>
