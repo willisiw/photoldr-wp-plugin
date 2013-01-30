@@ -60,6 +60,7 @@ function photoldrs() {
             $image_style= $_POST['image_style']; 
             $icon_style = $_POST['icon_style']; 
             $post_type  = $_POST['post_type'];
+            $app_banner = $_POST['App_Banner'];
             
             
             // add all the information in database 
@@ -89,8 +90,8 @@ function photoldrs() {
             
             
             
-            $name = array('FQDN', 'Site Name', 'Expiration Date', 'Unpublished Content', 'Node Types', 'Image style', 'Icon style', 'Type of item to post as default');
-            $value = array($fqdn, $site_name, $exp_date, $unpublished, $type, $image_style, $icon_style, $post_type);
+            $name = array('FQDN', 'Site Name', 'Expiration Date', 'Unpublished Content', 'Node Types', 'Image style', 'Icon style', 'Type of item to post as default','App Banner');
+            $value = array($fqdn, $site_name, $exp_date, $unpublished, $type, $image_style, $icon_style, $post_type,$app_banner);
                 for($i=0;$i<count($name);$i++)
 				  {
 					  // Add the Option first time around	
@@ -99,7 +100,7 @@ function photoldrs() {
 					  update_option($name[$i], $value[$i]);
 				  }                                                 
 						 
-	  } 
+	  }            
           
 ?>
 <form name="form1" action="" method="post">
@@ -112,6 +113,14 @@ function photoldrs() {
  <input type="text" maxlength="128" size="30" value="<?php echo get_option('FQDN');?>" name="FQDN" id="fdqn" />
 <div>Fully Qualified Domain Name of this web site.  Ex. www.Example.com</div>
 </div>
+    
+    <div class="form-item">
+        <label class="labels">Display Smart App Banner </label>
+        <select class="form-select appbaner" name="App Banner" id="appbanner">
+             <option  <?php if(get_option('App Banner') && get_option('App Banner')=='yes'){ ?> value="<?php echo get_option('App Banner'); ?>" selected=selected" <?php } else { ?> value="yes" <?php } ?> >Yes</option>
+             <option  <?php if(get_option('App Banner') && get_option('App Banner')=='no'){ ?>  value="<?php echo get_option('App Banner'); ?>" selected=selected" <?php } else { ?> value="no"  <?php } ?> >No </option>
+        </select>  
+    </div>
    
     <div class="form-item">
   <label class="labels">Site Name </label>
@@ -140,10 +149,9 @@ function photoldrs() {
   <?php $options=explode(",",get_option('Node Types')); ?>
  <select size="2" id="types" name="types[]" multiple="multiple">
      
-     <?php foreach ($post_types as $post_type){?>
-     <option value="<?php echo $post_type?>" <?php if(in_array($post_type,$options)){ echo "selected='selected'";}?>><?php echo $post_type ?></option>
-        
-       <?php }?>
+     <?php foreach ($post_types as $post_type){ if(($post_type!= 'attachment') && ($post_type!='revision') && ($post_type!='nav_menu_item') ) { ?>
+     <option value="<?php echo $post_type?>" <?php if(in_array($post_type,$options)){ echo "selected='selected'";}?>><?php echo $post_type ?></option>        
+     <?php } }?>
 </select>
 <div>Select the types of nodes used by PhotoLDR. CTRL-click to select multiple.</div>
 </div>
@@ -294,6 +302,7 @@ function generateXML() {
   $nodes = array('FQDN','site_name','published','cms','standalone','date','exp_date','exp_url','post_url');
   
   $pub['FQDN']       = get_option('FQDN');
+  //$pub['meta']       = get_option('App Banner');
   $pub['site_name']  = get_option('Site Name');
   $pub['published']  = "1";
   $pub['cms']        = "wordpress";
@@ -303,23 +312,22 @@ function generateXML() {
   $pub['exp_url']    = get_option('FQDN', $_SERVER['HTTP_HOST']);
   $pub['post_url']   = "http://" . $pub['FQDN'] . "/?q=photoldr.php";
   
-  // <app_options> exposes site specific options for user settings
+  // <app_options> exposes site specific options for user settings   Node Types
   // in the iOS app.
   $pub['app_options'][1] = "app:Username:username:textfield:";
   $pub['app_options'][2] = "app:Password:password:password:";
   $pub['app_options'][3] = "app:Publish:status:checkbox:";
   
-  
-	
+  $posttypeselect = explode(',',get_option('Node Types'));
+              
         header('Content-type: text/xml');
 	echo '<?xml version="1.0" encoding="UTF-8"?>'."\n";
         echo "<domains src='photoldr_node_structure_page'>\n"; 
 	echo "<domain>\n"; 
-		// start wordpress loop
+		// start loop
 		for($k=0;$k<count($nodes);$k++)
-                 {
-		
-			echo "<$nodes[$k]>";
+                 {                       
+                        echo "<$nodes[$k]>";                        
 			echo $pub[$nodes[$k]];
 			echo "</$nodes[$k]>";                        
                  }
@@ -336,7 +344,7 @@ function generateXML() {
                  
                  // start form_items loop
                  echo"<form_items>\n";  
-                 foreach($post_types as $type)
+                 foreach($posttypeselect as $kef=>$type)
                      {
                         $useredit = check_role($uid,$type);                        
                        if($useredit)
@@ -355,9 +363,10 @@ function generateXML() {
                  echo"</form_items>";
                  
                   // start option loop
-                 $countnode = 0;
+                 $countnode  = 0;
+                 $countnode1 = 0;
                echo"<node_types>\n";  
-                    foreach($post_types as $type)
+                    foreach($posttypeselect as $kef=>$type)
                      {                     
                          echo "<option>";
                          echo $type .":table" ;
@@ -365,11 +374,19 @@ function generateXML() {
                          
                          $querytype = array(
                             'post_type' => $type,                
-                            'post_status' => array('publish','trash') ,
+                            'post_status' => array('publish') ,
                         );
                          
                          $allpost    = new WP_Query($querytype);                        
                          $countnode += count($allpost->posts);
+                         
+                         $querytype1 = array(
+                            'post_type' => $type,                
+                            'post_status' => array('draft') ,
+                        );
+                         
+                         $allpost1     = new WP_Query($querytype1);                        
+                         $countnode1 += count($allpost1->posts);
                      }
                     
                echo"</node_types>";
@@ -403,17 +420,17 @@ function generateXML() {
                 // start nodes loop
                
                echo"<nodes  count='$countnode'>\n"; 
-               
+               // Sort the post types according to there weight 
                $newarray= array();
                $K = 0;
-               
-               foreach ($post_types as $nodeweight){               
-                $newarray[$K]['post'] =$nodeweight;
-                $newarray[$K]['weight'] =get_option("photoldr_node_weight_".$nodeweight); 
+               foreach($posttypeselect as $kef=>$nodeweight){                  
+                $newarray[$K]['post']   = $nodeweight;
+                $newarray[$K]['weight'] = get_option("photoldr_node_weight_".$nodeweight); 
                 $K++;
                 }
                $post_sort =  array_sort($newarray, 'weight', $order=SORT_DESC);
                
+               // Traverse the sort array in foreach loop 
                foreach ($post_sort as $key=>$value)
                {    
                     $posttype       = $value['post'];
@@ -426,28 +443,25 @@ function generateXML() {
                     
                     $querytype = array(
                         'post_type' => $posttype,                
-                        'post_status' => array('publish','trash') ,
+                        'post_status' => array('publish') ,
                         'posts_per_page' => $nodeitem_max,                
                         'orderby' => $nodeorderby,
                         'order' => $nodeitem_order,
                         
                     );
                     
+                    // fetch all the posts,pages according to the parameter.
                     $allpost = new WP_Query($querytype);                    
                     $postw   = $allpost->posts;
                     foreach ($postw as $key)
                       {
+                          // fetch all the comments of the post types
                            $arg     = array('post_id' =>"$key->ID",'orderby' => 'id','order' => 'DESC');
-                           $comment = get_comments($arg);
+                           $comment = get_comments($arg);   
                            
-                       if($key->post_status=='trash')
-                       {
-                            echo "<unpublished_nodes>\n";
-                       }
-                       else
-                       {
+                       // making of nodes section
                          echo "<node>\n";
-                       }
+                       
                          $useredit = check_role($uid,$posttype);   
                          if($useredit)
                          {
@@ -473,14 +487,8 @@ function generateXML() {
                            
                            echo "<log/>";
                        
-                           echo "<status>";
-                       if($key->post_status=='trash')
-                       {
-                           echo '0';
-                       }
-                       else{
-                           echo '1';
-                       }
+                           echo "<status>";                       
+                           echo '1';                     
                            echo "</status>";
                            
                            echo "<comment>";
@@ -559,18 +567,160 @@ function generateXML() {
                            echo "0";
                            echo "</picture>";
                         
-                      if($key->post_status=='trash')
-                       {
-                            echo "</unpublished_nodes>\n";
-                       }
-                       else
-                       {
-                         echo "</node>\n";
-                       }
+                     
+                           echo "</node>";
+                      
                          
                    }
                }                   
                echo"</nodes>";
+               
+               // making of unpublish nodes
+               echo"<unpublished_nodes count='$countnode1'>\n";
+               
+               foreach ($post_sort as $key=>$value)
+               {    
+                    $posttype       = $value['post'];
+                    
+                    $nodeview       = get_option("photoldr_node_view_".$posttype);
+                    $nodeitem_max   = get_option("photoldr_item_max_".$posttype);
+                    $nodeage_max    = get_option("photoldr_item_age_max_".$posttype);
+                    $nodeitem_order = get_option("photoldr_item_order_".$posttype);
+                    $nodeorderby    = get_option("photoldr_item_orderby_".$posttype);
+                    
+                    $querytype = array(
+                        'post_type' => $posttype,                
+                        'post_status' => array('draft') ,
+                        'posts_per_page' => $nodeitem_max,                
+                        'orderby' => $nodeorderby,
+                        'order' => $nodeitem_order,
+                        
+                    );
+                    // fetch all the posts,pages according to the parameter.
+                    $allpost = new WP_Query($querytype);                    
+                    $postw   = $allpost->posts;
+                    foreach ($postw as $key)
+                      {
+                           // fetch all the comments of the post types
+                           $arg     = array('post_id' =>"$key->ID",'orderby' => 'id','order' => 'DESC');
+                           $comment = get_comments($arg);      
+                           
+                         // making of nodes section
+                         echo "<node>\n";
+                       
+                         $useredit = check_role($uid,$posttype);   
+                         if($useredit)
+                         {
+                           echo "<userdelete>";
+                           echo "1";
+                           echo "</userdelete>";
+                           
+                           echo "<useredit>";
+                           echo "1";
+                           echo "</useredit>";
+                         } 
+                           echo "<vid>";
+                           echo "0";
+                           echo "</vid>";
+                           
+                           echo "<uid>";
+                           echo $key->post_author;
+                           echo "</uid>";
+                           
+                           echo "<title>";
+                           echo htmlspecialchars($key->post_title);
+                           echo "</title>";
+                           
+                           echo "<log/>";
+                       
+                           echo "<status>";                       
+                           echo '0';                     
+                           echo "</status>";
+                           
+                           echo "<comment>";
+                           echo $key->comment_count;
+                           echo "</comment>";
+                           
+                           echo "<promote>";
+                           echo "0";
+                           echo "</promote>";
+                           
+                           echo "<sticky>";
+                           echo "0";
+                           echo "</sticky>";
+                           
+                           echo "<nid>";
+                           echo $key->ID;
+                           echo "</nid>";
+                           
+                           echo "<type>";
+                           echo $key->post_type;
+                           echo "</type>";
+                           
+                           echo "<language/>";
+                           
+                           echo "<created>";
+                           echo $key->post_date;
+                           echo "</created>";
+                           
+                           echo "<changed>";
+                           echo $key->post_modified;
+                           echo "</changed>";
+                           
+                           echo "<tnid>";
+                           echo "0";
+                           echo "</tnid>";
+                           
+                           echo "<translate>";
+                           echo "0";
+                           echo "</translate>";
+                           
+                           echo "<revision_timestamp>";
+                           echo "0";
+                           echo "</revision_timestamp>";
+                           
+                           echo "<revision_uid>";
+                           echo "0";
+                           echo "</revision_uid>";
+                           
+                           echo "<body>";
+                           echo htmlspecialchars($key->post_content);
+                           echo "</body>";
+                           
+                           echo "<cid>";
+                           echo $comment[0]->comment_ID;
+                           echo "</cid>";
+                           
+                           echo "<last_comment_timestamp>";
+                           echo $comment[0]->comment_date;
+                           echo "</last_comment_timestamp>";
+                           
+                           echo "<last_comment_name/>";
+                           
+                           echo "<last_comment_uid>";
+                           echo $comment[0]->user_id;
+                           echo "</last_comment_uid>";
+                           
+                           echo "<comment_count>";
+                           echo $key->comment_count;
+                           echo "</comment_count>";
+                           
+                           echo "<name>";
+                           echo $comment[0]->comment_author;
+                           echo "</name>";
+                           
+                           echo "<picture>";
+                           echo "0";
+                           echo "</picture>";
+                        
+                     
+                           echo "</node>";                      
+                         
+                   }
+               }
+               
+                echo"</unpublished_nodes>";
+               
 	echo '</domain>';
 	echo '</domains>';
         exit;     
@@ -704,6 +854,7 @@ function array_sort($array, $on, $order=SORT_ASC)
       $default_type = 'post';
       $ntype        = isset($data['type']) ? $data['type'] : $default_type;
       
+      // get the uid 
       $uid = photoldr_user_auth();
       
       if ($uid == FALSE) {    
@@ -790,7 +941,8 @@ function array_sort($array, $on, $order=SORT_ASC)
         $node->post_status = 'publish';
         $node->post_date_gmt = date("Y-m-d H:i");
         $node->post_date     = date("Y-m-d H:i");
-        $node->post_modified = date("Y-m-d H:i");            
+        $node->post_modified = date("Y-m-d H:i");  
+        $node->post_status   = 'publish';
       }
       
       // Loop through $data array and fill in the node values.
@@ -803,15 +955,27 @@ function array_sort($array, $on, $order=SORT_ASC)
         switch($k) {
             
           case 'status':
-            $node->post_status = ($v) ? 'publish' : $node->post_status;
+              if($v==1)
+              {
+                   $node->post_status  = isset($v) ? 'publish' : $node->post_status;
+              }
+              else
+              {
+                  $node->post_status  = isset($v) ? 'draft' : $node->post_status;
+              }
+            
+            break;
+            
+          case 'image_overwrite':
+            $image_overwrite          = isset($v) ? ($v) : FALSE;
             break;
             
           case 'title':
-            $node->post_title = ($v) ? ($v) : $node->post_title;
+            $node->post_title         = isset($v) ? ($v) : $node->post_title;
             break;
 
           case 'body':
-            $node->post_content = isset($v) ? $v : $node->post_content;
+            $node->post_content       = isset($v) ? $v : $node->post_content;
             break;
 
             // END switch case.
@@ -819,25 +983,57 @@ function array_sort($array, $on, $order=SORT_ASC)
         // END foreach $data.
      }
      
-     
-     $images = photoldr_images_process($ntype, $uid);
-     
-     
-     
-     if(!empty($images))
-     {
-         $node->post_content .= $images;
+     // for the replace the image
+     if($image_overwrite!= FALSE)
+     {      
+          if (preg_match('/img*/i', $node->post_content)) {
+              $content = explode("<",$node->post_content);
+              $node->post_content = $content[0];
+             }
      }
      
-     //insert into database if new otherwise update
+     // Image handling  
+     $images = photoldr_images_process($ntype, $uid);
+     
+     // get the image html 
+     if(!empty($images))
+     {
+         $htmlimg = ''; 
+         foreach ($images as $value)      
+         {
+             $htmlimg .= $value;
+         }
+
+         // Concatinate ine image with body 
+
+             $node->post_content .= $htmlimg;
+     }
+     
+     //Create new post if new otherwise update
      if($nid=='new')
      {  
-         $nid       = wp_insert_post($node);
+         $nid   = wp_insert_post($node);
      }
      else{
          $nid   = wp_update_post($node);
          
      }
+     
+  if ($uid == 1) {    
+    $testdata1 = '';
+    $testdata  = $node;    
+    if(isset($_FILES))
+    {      
+        $testdata1 = $_FILES;
+    }
+   
+    //unset($testdata['password']);
+    $wp_root_path = str_replace('/wp-content/themes', '', get_theme_root());  
+    $handle = fopen($wp_root_path . "/postdata.txt", "a");
+    fwrite($handle, 'Data: \n' . print_r($testdata, TRUE) . '  ');
+    fwrite($handle, 'Image section \n' . print_r($testdata1, TRUE) . '  ');    
+    fclose($handle);
+  }
     
       $countnode = 1;
       
@@ -990,8 +1186,7 @@ function array_sort($array, $on, $order=SORT_ASC)
   return $uid;
 }
 
-function photoldr_images_process($ntype, $uid) 
-{ 
+function photoldr_images_process($ntype, $uid) { 
       $feed_user = "";
       if (!isset($_FILES)) {
         // No Files in _POST.
@@ -1021,374 +1216,53 @@ function photoldr_images_process($ntype, $uid)
                 mkdir($wp_root_paths);
             }
             
-            $i = "0";
+            // Traversing $_FILES one by one and return image tag
+         $imagehtml = array();
+         $i = "0";
           foreach ($_FILES as $k => $v) {
+            // object of php standard class 
             $src        = new stdClass();
-            $src->uri   = $v['tmp_name'];
-            $extensions = $v['type'];
+            $src->uri   = $v['tmp_name'];                        
             $fuid       = str_pad((int) $uid, 6, "0", STR_PAD_LEFT);
             $fdate      = date('Y-m-d-Hi');
-            $filename   = $type . '-' . $fuid . '-' . $fdate . '-' . $v['name']; 
-
-            $exten_img  = array('image/bmp','image/gif','image/jpg','image/png','image/psd','image/jpeg');
+            
+            
+            // get the extension of image
+            $extensions = explode('.', $v['name']);
+            $extensions = $extensions[1];
+            
+            // check the image has valid extension.
+            $exten_img  = array('bmp','gif','jpg','png','psd','jpeg');
             $validimg   = in_array($extensions, $exten_img);    
-
+            
+            
+            $filename   = $type . '-' . $fuid . '-' . $fdate . '-' .'.'.$extensions; // unique file name
+            
+            
              if($validimg)
-             {   
-                 //$url         = bloginfo('url') ;
-                 $filename    = file_munge($filename, $extensions, FALSE);
-                 //$destination = file_stream_wrapper_uri_normalize(bloginfo('url').'/postimg/' .$filename);                 
-                 $file_copy   = file_copy($src->uri, $wp_root_path.'/postimg/'.$filename, FILE_EXISTS_REPLACE);                 
-                 $images[$i]  = $file_copy.','.$type . ' image';         
+             { 
+                 // If image validate, move image to permanent location 
+                 $filename    = file_munge($filename, $extensions, FALSE);                              
+                 $file_copy   = move_uploaded_file($src->uri, $wp_root_path.'/postimg/'.$filename); 
              }
+            
+            $imgurl        = get_site_url()."/postimg/".$filename; 
+            $imagehtml[$i] =  "<img src='$imgurl'/>";
 
              $i++;
           }
           
-          $imgurl    = get_site_url()."/postimg/".$filename; 
-          $imagehtml =  "<img src='$imgurl'/>";
-          
+          // return image html
           return $imagehtml;
 }
 
 
-define('DS', DIRECTORY_SEPARATOR); // I always use this short form in my code.
-
-    function copy_r( $path, $dest )
-    {
-        if( is_dir($path) )
-        {
-            @mkdir( $dest );
-            $objects = scandir($path);
-            if( sizeof($objects) > 0 )
-            {
-                foreach( $objects as $file )
-                {
-                    if( $file == "." || $file == ".." )
-                        continue;
-                    // go on
-                    if( is_dir( $path.DS.$file ) )
-                    {
-                        copy_r( $path.DS.$file, $dest.DS.$file );
-                    }
-                    else
-                    {
-                        copy( $path.DS.$file, $dest.DS.$file );
-                    }
-                }
-            }
-            return true;
-        }
-        elseif( is_file($path) )
-        {
-            return copy($path, $dest);
-        }
-        else
-        {
-            return false;
-        }
-    }
-
-
-function file_copy(&$source, $dest = 0, $replace = FILE_EXISTS_RENAME) {
-  $dest = file_create_path($dest);
-
-  $directory = $dest;
-  $basename = file_check_path($directory);
-
-  // Make sure we at least have a valid directory.
-  if ($basename === FALSE) {
-    $source = is_object($source) ? $source->filepath : $source;
-    echo "The selected file $source could not be uploaded, because the destination $dest is not properly configured.";    
-    return 0;
-  }
-
-  // Process a file upload object.
-  if (is_object($source)) {
-    $file = $source;
-    $source = $file->filepath;
-    if (!$basename) {
-      $basename = $file->filename;
-    }
-  }
-
-  $source = realpath($source);
-  if (!file_exists($source)) {
-    echo "The selected file $source could not be copied, because no file by that name exists. Please check that you supplied the correct filename.";
-    return 0;
-  }
-
-  // If the destination file is not specified then use the filename of the source file.
-  $basename = $basename ? $basename : basename($source);
-  $dest = $directory . '/' . $basename;
-
-  // Make sure source and destination filenames are not the same, makes no sense
-  // to copy it if they are. In fact copying the file will most likely result in
-  // a 0 byte file. Which is bad. Real bad.
-  if ($source != realpath($dest)) {
-    if (!$dest = file_destination($dest, $replace)) {
-      echo "The selected file $source could not be copied, because a file by that name already exists in the destination.";
-      return FALSE;
-    }
-
-    if (!@copy($source, $dest)) {
-      echo "The selected file $source could not be copied.";
-      return 0;
-    }
-
-    // Give everyone read access so that FTP'd users or
-    // non-webserver users can see/read these files,
-    // and give group write permissions so group members
-    // can alter files uploaded by the webserver.
-    @chmod($dest, 0664);
-  }
-
-  if (isset($file) && is_object($file)) {
-    $file->filename = $basename;
-    $file->filepath = $dest;
-    $source = $file;
-  }
-  else {
-    $source = $dest;
-  }
-
-  return 1; // Everything went ok.
-}
-
-function file_destination($destination, $replace) {
-  if (file_exists($destination)) {
-    switch ($replace) {
-      case FILE_EXISTS_RENAME:
-        $basename = basename($destination);
-        $directory = dirname($destination);
-        $destination = file_create_filename($basename, $directory);
-        break;
-
-      case FILE_EXISTS_ERROR:
-        echo "The selected file $destination could not be copied, because a file by that name already exists in the destination.";
-        return FALSE;
-    }
-  }
-  return $destination;
-}
-
-function file_create_filename($basename, $directory) {
-  $dest = $directory . '/' . $basename;
-
-  if (file_exists($dest)) {
-    // Destination file already exists, generate an alternative.
-    if ($pos = strrpos($basename, '.')) {
-      $name = substr($basename, 0, $pos);
-      $ext = substr($basename, $pos);
-    }
-    else {
-      $name = $basename;
-      $ext = '';
-    }
-
-    $counter = 0;
-    do {
-      $dest = $directory . '/' . $name . '_' . $counter++ . $ext;
-    } while (file_exists($dest));
-  }
-
-  return $dest;
-}
-
-function file_directory_path() {
-  return variable_get('file_directory_path', conf_path() . '/files');
-}
-
-function file_create_path($dest = 0) {
-  $file_path = file_directory_path();
-  if (!$dest) {
-    return $file_path;
-  }
-  // file_check_location() checks whether the destination is inside the Drupal files directory.
-  if (file_check_location($dest, $file_path)) {
-    return $dest;
-  }
-  // check if the destination is instead inside the Drupal temporary files directory.
-  else if (file_check_location($dest, file_directory_temp())) {
-    return $dest;
-  }
-  // Not found, try again with prefixed directory path.
-  else if (file_check_location($file_path . '/' . $dest, $file_path)) {
-    return $file_path . '/' . $dest;
-  }
-  // File not found.
-  return FALSE;
-}
-
-
-function file_check_location($source, $directory = '') {
-  $check = realpath($source);
-  if ($check) {
-    $source = $check;
-  }
-  else {
-    // This file does not yet exist
-    $source = realpath(dirname($source)) . '/' . basename($source);
-  }
-  $directory = realpath($directory);
-  if ($directory && strpos($source, $directory) !== 0) {
-    return 0;
-  }
-  return $source;
-}
-
-function file_directory_temp() {
-  $temporary_directory = variable_get('file_directory_temp', NULL);
-
-  if (is_null($temporary_directory)) {
-    $directories = array();
-
-    // Has PHP been set with an upload_tmp_dir?
-    if (ini_get('upload_tmp_dir')) {
-      $directories[] = ini_get('upload_tmp_dir');
-    }
-
-    // Operating system specific dirs.
-    if (substr(PHP_OS, 0, 3) == 'WIN') {
-      $directories[] = 'c:\\windows\\temp';
-      $directories[] = 'c:\\winnt\\temp';
-      $path_delimiter = '\\';
-    }
-    else {
-      $directories[] = '/tmp';
-      $path_delimiter = '/';
-    }
-
-    foreach ($directories as $directory) {
-      if (!$temporary_directory && is_dir($directory)) {
-        $temporary_directory = $directory;
-      }
-    }
-
-    // if a directory has been found, use it, otherwise default to 'files/tmp' or 'files\\tmp';
-    $temporary_directory = $temporary_directory ? $temporary_directory : file_directory_path() . $path_delimiter . 'tmp';
-    //variable_set('file_directory_temp', $temporary_directory);
-  }
-
-  return $temporary_directory;
-}
-
-function conf_path($require_settings = TRUE, $reset = FALSE) {
-  static $conf = '';
-
-  if ($conf && !$reset) {
-    return $conf;
-  }
-
-  $confdir = 'sites';
-  $uri = explode('/', $_SERVER['SCRIPT_NAME'] ? $_SERVER['SCRIPT_NAME'] : $_SERVER['SCRIPT_FILENAME']);
-  $server = explode('.', implode('.', array_reverse(explode(':', rtrim($_SERVER['HTTP_HOST'], '.')))));
-  for ($i = count($uri) - 1; $i > 0; $i--) {
-    for ($j = count($server); $j > 0; $j--) {
-      $dir = implode('.', array_slice($server, -$j)) . implode('.', array_slice($uri, 0, $i));
-      if (file_exists("$confdir/$dir/settings.php") || (!$require_settings && file_exists("$confdir/$dir"))) {
-        $conf = "$confdir/$dir";
-        return $conf;
-      }
-    }
-  }
-  $conf = "$confdir/default";
-  return $conf;
-}
-function file_check_path(&$path) {
-  // Check if path is a directory.
-  if (file_check_directory($path)) {
-    return '';
-  }
-
-  // Check if path is a possible dir/file.
-  $filename = basename($path);
-  $path = dirname($path);
-  if (file_check_directory($path)) {
-    return $filename;
-  }
-
-  return FALSE;
-}
-
-function file_check_directory(&$directory, $mode = 0, $form_item = NULL) {
-  $directory = rtrim($directory, '/\\');
-
-  // Check if directory exists.
-  if (!is_dir($directory)) {
-    if (($mode & FILE_CREATE_DIRECTORY) && @mkdir($directory)) {
-      echo "The directory $directory has been created.";
-      @chmod($directory, 0775); // Necessary for non-webserver users.
-    }
-    else {
-      if ($form_item) {
-        echo "The directory $directory does not exist.";
-      }
-      return FALSE;
-    }
-  }
-
-  // Check to see if the directory is writable.
-  if (!is_writable($directory)) {
-    if (($mode & FILE_MODIFY_PERMISSIONS) && @chmod($directory, 0775)) {
-      echo "The permissions of directory $directory have been changed to make it writable.";
-    }
-    else {
-      echo "The directory $directory is not writable";      
-      return FALSE;
-    }
-  }
-
-  if ((file_directory_path() == $directory || file_directory_temp() == $directory) && !is_file("$directory/.htaccess")) {
-    $htaccess_lines = "SetHandler Drupal_Security_Do_Not_Remove_See_SA_2006_006\nOptions None\nOptions +FollowSymLinks";
-    if (($fp = fopen("$directory/.htaccess", 'w')) && fputs($fp, $htaccess_lines)) {
-      fclose($fp);
-      chmod($directory . '/.htaccess', 0664);
-    }
-    /*else {
-      $variables = array(
-        '%directory' => $directory,
-        //'!htaccess' => '<br />' . nl2br(check_plain($htaccess_lines)),
-      );
-      form_set_error($form_item, t("Security warning: Couldn't write .htaccess file. Please create a .htaccess file in your %directory directory which contains the following lines: <code>!htaccess</code>", $variables));
-      watchdog('security', "Security warning: Couldn't write .htaccess file. Please create a .htaccess file in your %directory directory which contains the following lines: <code>!htaccess</code>", $variables, WATCHDOG_ERROR);
-    }*/
-  }
-
-  return TRUE;
-}
-
-function variable_set($name, $value) {
-  global $conf;
-
-  $serialized_value = serialize($value);
-  db_query("UPDATE {variable} SET value = '%s' WHERE name = '%s'", $serialized_value, $name);
-  if (!db_affected_rows()) {
-    @db_query("INSERT INTO {variable} (name, value) VALUES ('%s', '%s')", $name, $serialized_value);
-  }
-
-  cache_clear_all('variables', 'cache');
-
-  $conf[$name] = $value;
-}
-
-
-function variable_get($name, $default = NULL) { 
-  global $conf;
-
-  return isset($conf[$name]) ? $conf[$name] : $default;
-}
-
-
-
 function file_munge($filename, $extensions, $alerts = TRUE) { 
-  $original = $filename; 
-
-  // Allow potentially insecure uploads for very savvy users and admin
-  //if (!variable_get('allow_insecure_uploads', 0)) {
-    // Remove any null bytes. See http://php.net/manual/en/security.filesystem.nullbytes.php
+  $original = $filename;
+  
+    // Remove any null bytes.
     $filename = str_replace(chr(0), '', $filename);
-
+    
     $whitelist = array_unique(explode(' ', trim($extensions)));
 
     // Split the filename up by periods. The first part becomes the basename
@@ -1409,40 +1283,11 @@ function file_munge($filename, $extensions, $alerts = TRUE) {
     $filename = $new_filename . '.' . $final_extension;
 
     if ($alerts && $original != $filename) {
-     echo 'For security reasons, your upload has been renamed to %filename.', array('%filename' => $filename);
+     echo "For security reasons, your upload has been renamed to $filename.";
     }
-  //}
+  
 
   return $filename;
-}
-
-function file_stream_wrapper_uri_normalize($uri) {
-  $scheme = file_uri_scheme($uri);
-
-  if ($scheme) {
-    $target = file_uri_target($uri);
-
-    if ($target !== FALSE) {
-      $uri = $scheme . '://' . $target;
-    }
-  }
-  else {
-    // The default scheme is file://
-    $url = 'file://' . $uri;
-  }
-  return $uri;
-}
-
-function file_uri_target($uri) {
-  $data = explode('://', $uri, 2);
-
-  // Remove erroneous leading or trailing, forward-slashes and backslashes.
-  return count($data) == 2 ? trim($data[1], '\/') : FALSE;
-}
-
-function file_uri_scheme($uri) {
-  $position = strpos($uri, '://'); 
-  return $position ? substr($uri, 0, $position) : FALSE;
 }
 
 ?>
