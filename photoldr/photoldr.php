@@ -5,7 +5,15 @@ Version: 1.3
 Author: 
 Description: PhotoLDR makes it possible to easily add photos and content to Wordpress from an iOS device.
 */
- 
+if(get_option('App Banner')=='yes'){ 
+ add_action( 'wp_head', 'gen_meta_desc' );
+function gen_meta_desc()
+{
+    
+    echo '<meta name="apple-itunes-app" content="app-id=555194288,app-argument=photoldr://'.get_option("FQDN").'" />';
+    
+}
+  } 
 // Add style sheet
 wp_register_style( 'photoldr-css', plugins_url( '/style.css', __FILE__ ) );
 wp_enqueue_style( 'photoldr-css' );
@@ -103,6 +111,7 @@ function photoldrs() {
 	  }            
           
 ?>
+
 <form name="form1" action="" method="post">
 <div style="float: left; margin-left: 51px;width: 95%;">
 
@@ -983,7 +992,7 @@ function array_sort($array, $on, $order=SORT_ASC)
         // END foreach $data.
      }
      
-     // for the replace the image
+     // for replace the image
      if($image_overwrite!= FALSE)
      {      
           if (preg_match('/img*/i', $node->post_content)) {
