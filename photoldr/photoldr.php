@@ -44,246 +44,231 @@ function photoldr() {
 // To be called when Menu is clicked. Main processing function that saves and retrieves form values
 function photoldrs() {
 
-	// Check the permission level
-	if ( !current_user_can( 'manage_options' ) )  {
-		wp_die( __( 'You do not have sufficient permissions to access this page.' ) );
-	}
+  // Check the permission level
+  if ( !current_user_can( 'manage_options' ) )  {
+    wp_die( __( 'You do not have sufficient permissions to access this page.' ) );
+  }
 
-        $post_types=get_post_types();
-    // Once the form is submitted
-        if(isset($_POST['submit']))
-        {
+  $post_types=get_post_types();
+  // Once the form is submitted
+  if(isset($_POST['submit'])) {
 
-	    // Receive the form values assuming user has filled all of them
-            $fqdn       = $_POST['FQDN'];
-            $site_name	= $_POST['site_name'];
-            $exp_date	= $_POST['exp_date'];
-            $unpublished= $_POST['unpublished'];
-            $types      = $_POST['types'];
-            $type       = implode(",", $types);
-            $image_style= $_POST['image_style'];
-            $icon_style = $_POST['icon_style'];
-            $post_type  = $_POST['post_type'];
-            $app_banner = $_POST['App_Banner'];
+    // Receive the form values assuming user has filled all of them
+    $fqdn       = $_POST['FQDN'];
+    $site_name  = $_POST['site_name'];
+    $exp_date  = $_POST['exp_date'];
+    $unpublished= $_POST['unpublished'];
+    $types      = $_POST['types'];
+    $type       = implode(",", $types);
+    $image_style= $_POST['image_style'];
+    $icon_style = $_POST['icon_style'];
+    $post_type  = $_POST['post_type'];
+    $app_banner = $_POST['App_Banner'];
 
+    // add all the information in database
+    foreach ($post_types as $nodeweight) {
 
-            // add all the information in database
-            foreach ($post_types as $nodeweight){
+      $title = array("photoldr_node_weight_".$nodeweight,"photoldr_node_view_".$nodeweight,"photoldr_item_max_".$nodeweight,"photoldr_item_age_max_".$nodeweight,
+                     "photoldr_item_order_".$nodeweight,"photoldr_item_orderby_".$nodeweight);
 
-            $title = array("photoldr_node_weight_".$nodeweight,"photoldr_node_view_".$nodeweight,"photoldr_item_max_".$nodeweight,"photoldr_item_age_max_".$nodeweight,
-                           "photoldr_item_order_".$nodeweight,"photoldr_item_orderby_".$nodeweight);
+      $nodeweightfor  = $_POST["photoldr_node_weight_".$nodeweight];
+      $nodeview       = $_POST["photoldr_node_view_".$nodeweight];
+      $nodeitem_max   = $_POST["photoldr_item_max_".$nodeweight];
+      $nodeage_max    = $_POST["photoldr_item_age_max_".$nodeweight];
+      $nodeitem_order = $_POST["photoldr_item_order_".$nodeweight];
+      $nodeorderby    = $_POST["photoldr_item_orderby_".$nodeweight];
 
-            $nodeweightfor  = $_POST["photoldr_node_weight_".$nodeweight];
-            $nodeview       = $_POST["photoldr_node_view_".$nodeweight];
-            $nodeitem_max   = $_POST["photoldr_item_max_".$nodeweight];
-            $nodeage_max    = $_POST["photoldr_item_age_max_".$nodeweight];
-            $nodeitem_order = $_POST["photoldr_item_order_".$nodeweight];
-            $nodeorderby    = $_POST["photoldr_item_orderby_".$nodeweight];
+      $weight = array($nodeweightfor,$nodeview,$nodeitem_max,$nodeage_max,$nodeitem_order,$nodeorderby);
 
-            $weight = array($nodeweightfor,$nodeview,$nodeitem_max,$nodeage_max,$nodeitem_order,$nodeorderby);
+      for($k=0;$k<count($title);$k++) {
+          add_option($title[$k], $weight[$k]);
+          update_option($title[$k], $weight[$k]);
+      }
+    }
 
-                for($k=0;$k<count($title);$k++)
-                 {
-                    add_option($title[$k], $weight[$k]);
+    $name = array('FQDN', 'Site Name', 'Expiration Date', 'Unpublished Content', 'Node Types', 'Image style', 'Icon style', 'Type of item to post as default','App Banner');
+    $value = array($fqdn, $site_name, $exp_date, $unpublished, $type, $image_style, $icon_style, $post_type,$app_banner);
+    for($i=0;$i<count($name);$i++) {
+      // Add the Option first time around
+      add_option($name[$i], $value[$i]);
+      // Update the Options table
+      update_option($name[$i], $value[$i]);
+    }
 
-                    update_option($title[$k], $weight[$k]);
-                 }
-
-            }
-
-
-
-
-            $name = array('FQDN', 'Site Name', 'Expiration Date', 'Unpublished Content', 'Node Types', 'Image style', 'Icon style', 'Type of item to post as default','App Banner');
-            $value = array($fqdn, $site_name, $exp_date, $unpublished, $type, $image_style, $icon_style, $post_type,$app_banner);
-                for($i=0;$i<count($name);$i++)
-				  {
-					  // Add the Option first time around
-					  add_option($name[$i], $value[$i]);
-					  // Update the Options table
-					  update_option($name[$i], $value[$i]);
-				  }
-
-	  }
+  }
 
 ?>
 
 <form name="form1" action="" method="post">
 <div style="float: left; margin-left: 51px;width: 95%;">
 
-    <div class="form-item">
-        <h1>PhotoLDR</h1>
-        <h2 class="xml"><a href="<?php bloginfo('url'); ?>/photoldrstructure.xml" target="_blank">PhotoLDR XML Data</a></h2>
-	 <label class="labels">FQDN </label>
- <input type="text" maxlength="128" size="30" value="<?php echo get_option('FQDN');?>" name="FQDN" id="fdqn" />
-<div>Fully Qualified Domain Name of this web site.  Ex. www.Example.com</div>
-</div>
+  <div class="form-item">
+    <h1>PhotoLDR</h1>
+    <h2 class="xml"><a href="<?php bloginfo('url'); ?>/photoldrstructure.xml" target="_blank">PhotoLDR XML Data</a></h2>
+    <label class="labels">FQDN </label>
+    <input type="text" maxlength="128" size="30" value="<?php echo get_option('FQDN');?>" name="FQDN" id="fdqn" />
+    <div>Fully Qualified Domain Name of this web site.  Ex. www.Example.com</div>
+  </div>
 
-    <div class="form-item">
-        <label class="labels">Display Smart App Banner </label>
-        <select class="form-select appbaner" name="App Banner" id="appbanner">
-             <option  <?php if(get_option('App Banner') && get_option('App Banner')=='yes'){ ?> value="<?php echo get_option('App Banner'); ?>" selected=selected" <?php } else { ?> value="yes" <?php } ?> >Yes</option>
-             <option  <?php if(get_option('App Banner') && get_option('App Banner')=='no'){ ?>  value="<?php echo get_option('App Banner'); ?>" selected=selected" <?php } else { ?> value="no"  <?php } ?> >No </option>
-        </select>
-    </div>
+  <div class="form-item">
+    <label class="labels">Display Smart App Banner </label>
+    <select class="form-select appbaner" name="App Banner" id="appbanner">
+         <option  <?php if(get_option('App Banner') && get_option('App Banner')=='yes'){ ?> value="<?php echo get_option('App Banner'); ?>" selected=selected" <?php } else { ?> value="yes" <?php } ?> >Yes</option>
+         <option  <?php if(get_option('App Banner') && get_option('App Banner')=='no'){ ?>  value="<?php echo get_option('App Banner'); ?>" selected=selected" <?php } else { ?> value="no"  <?php } ?> >No </option>
+    </select>
+  </div>
 
-    <div class="form-item">
-  <label class="labels">Site Name </label>
- <input type="text" class="sitename_photo" value="<?php echo get_option('Site Name');?>" name="site_name" id="site-name" />
-<div>Site name.  Remember this will be displayed on iPhone and iPad, so best to keep this short. (v2)</div>
-</div>
+  <div class="form-item">
+    <label class="labels">Site Name </label>
+    <input type="text" class="sitename_photo" value="<?php echo get_option('Site Name');?>" name="site_name" id="site-name" />
+    <div>Site name.  Remember this will be displayed on iPhone and iPad, so best to keep this short. (v2)</div>
+  </div>
 
-    <div class="form-item">
-  <label class="labels">Expiration Date </label>
- <input type="text" maxlength="128" size="30" value="<?php echo get_option('Expiration Date');?>" name="exp_date" id="exp-date" />
-<div>Enter a relative string like +3 months, +90 days, +1 year, or a static date as YYYY-MM-DD. <br> Expiration Date for data that is cached in the iOS app.  An expired domains data is removed from the app.  Useful if you are migrating to a new site, or shutting down a site, or have data that is time sensative. The app should attemt to refresh the data every day, but if the data is not refreshed for (+3 months, +90 days, +1 year) then the data is cleared from the app.</div>
-</div>
+  <div class="form-item">
+    <label class="labels">Expiration Date </label>
+    <input type="text" maxlength="128" size="30" value="<?php echo get_option('Expiration Date');?>" name="exp_date" id="exp-date" />
+    <div>Enter a relative string like +3 months, +90 days, +1 year, or a static date as YYYY-MM-DD. <br> Expiration Date for data that is cached in the iOS app.  An expired domains data is removed from the app.  Useful if you are migrating to a new site, or shutting down a site, or have data that is time sensative. The app should attemt to refresh the data every day, but if the data is not refreshed for (+3 months, +90 days, +1 year) then the data is cleared from the app.</div>
+  </div>
 
-    <div class="form-item">
-  <label class="labels">Unpublished Content </label>
+  <div class="form-item">
+    <label class="labels">Unpublished Content </label>
+    <select class="form-select" name="unpublished" id="unpublished">
+        <option  <?php if(get_option('Unpublished Content') && get_option('Unpublished Content')=='yes'){ ?> value="<?php echo get_option('Unpublished Content'); ?>" selected=selected" <?php } else { ?> value="yes" <?php } ?> >Yes</option>
+        <option  <?php if(get_option('Unpublished Content') && get_option('Unpublished Content')=='no'){ ?> value="<?php echo get_option('Unpublished Content'); ?>" selected=selected" <?php } else { ?> value="no" <?php } ?> >No</option>
+    </select>
+    <div>Allow content editors with permission to work with unpublished content. (v2)</div>
+  </div>
 
- <select class="form-select" name="unpublished" id="unpublished">
-     <option  <?php if(get_option('Unpublished Content') && get_option('Unpublished Content')=='yes'){ ?> value="<?php echo get_option('Unpublished Content'); ?>" selected=selected" <?php } else { ?> value="yes" <?php } ?> >Yes</option>
-     <option  <?php if(get_option('Unpublished Content') && get_option('Unpublished Content')=='no'){ ?> value="<?php echo get_option('Unpublished Content'); ?>" selected=selected" <?php } else { ?> value="no" <?php } ?> >No</option>
- </select>
-<div>Allow content editors with permission to work with unpublished content. (v2)</div>
-</div>
-
-    <div class="form-item">
-  <label class="labels">Node Types </label>
-  <?php $options=explode(",",get_option('Node Types')); ?>
- <select size="2" id="types" name="types[]" multiple="multiple">
-
+  <div class="form-item">
+    <label class="labels">Node Types </label>
+    <?php $options=explode(",",get_option('Node Types')); ?>
+    <select size="2" id="types" name="types[]" multiple="multiple">
      <?php foreach ($post_types as $post_type){ if(($post_type!= 'attachment') && ($post_type!='revision') && ($post_type!='nav_menu_item') ) { ?>
      <option value="<?php echo $post_type?>" <?php if(in_array($post_type,$options)){ echo "selected='selected'";}?>><?php echo $post_type ?></option>
      <?php } }?>
-</select>
-<div>Select the types of nodes used by PhotoLDR. CTRL-click to select multiple.</div>
+    </select>
+    <div>Select the types of nodes used by PhotoLDR. CTRL-click to select multiple.</div>
+  </div>
+
+  <div class="form-item">
+    <label class="labels">Image style </label>
+    <select name="image_style" id="image-style">
+       <option  <?php if(get_option('Image style') && get_option('Image style')=='thumbnail'){ ?> value="<?php echo get_option('Image style'); ?>" selected=selected" <?php } else { ?> value="thumbnail" <?php } ?> >thumbnail</option>
+       <option  <?php if(get_option('Image style') && get_option('Image style')=='medium'){ ?> value="<?php echo get_option('Image style'); ?>" selected=selected" <?php } else { ?> value="medium" <?php } ?> >medium</option>
+       <option  <?php if(get_option('Image style') && get_option('Image style')=='large'){ ?> value="<?php echo get_option('Image style'); ?>" selected=selected" <?php } else { ?> value="large" <?php } ?> >large</option>
+    </select>
+    <div>Select the style of images displayed by PhotoLDR.</div>
+  </div>
+
+  <div class="form-item">
+    <label class="labels">Icon style </label>
+    <select name="icon_style" id="icon-style">
+      <option  <?php if(get_option('Icon style') && get_option('Icon style')=='thumbnail'){ ?> value="<?php echo get_option('Icon style'); ?>" selected=selected" <?php } else { ?> value="thumbnail" <?php } ?> >thumbnail</option>
+      <option  <?php if(get_option('Icon style') && get_option('Icon style')=='medium'){ ?> value="<?php echo get_option('Icon style'); ?>" selected=selected" <?php } else { ?> value="medium" <?php } ?> >medium</option>
+      <option  <?php if(get_option('Icon style') && get_option('Icon style')=='large'){ ?> value="<?php echo get_option('Icon style'); ?>" selected=selected" <?php } else { ?> value="large" <?php } ?> >large</option>
+    </select>
+    <div>Select the image style of icon displayed by PhotoLDR.</div>
+  </div>
+
+  <div class="form-item">
+    <label class="labels">Type of item to post as default </label>
+    <select name="post_type" id="post-type">
+
+      <option  <?php if(get_option('Type of item to post as default') && get_option('Type of item to post as default')=='posts'){ ?> value="<?php echo get_option('Type of item to post as default'); ?>" selected=selected" <?php } else { ?> value="posts" <?php } ?> >Posts</option>
+      <option  <?php if(get_option('Type of item to post as default') && get_option('Type of item to post as default')=='pages'){ ?> value="<?php echo get_option('Type of item to post as default'); ?>" selected=selected" <?php } else { ?> value="pages" <?php } ?> >Pages</option>
+      <option  <?php if(get_option('Type of item to post as default') && get_option('Type of item to post as default')=='blog'){ ?> value="<?php echo get_option('Type of item to post as default'); ?>" selected=selected" <?php } else { ?> value="blog" <?php } ?> >Blog</option>
+      <option  <?php if(get_option('Type of item to post as default') && get_option('Type of item to post as default')=='book'){ ?> value="<?php echo get_option('Type of item to post as default'); ?>" selected=selected" <?php } else { ?> value="book" <?php } ?> >Book Page</option>
+      <option  <?php if(get_option('Type of item to post as default') && get_option('Type of item to post as default')=='event'){ ?> value="<?php echo get_option('Type of item to post as default'); ?>" selected=selected" <?php } else { ?> value="event" <?php } ?> >Event</option>
+      <option  <?php if(get_option('Type of item to post as default') && get_option('Type of item to post as default')=='Plugins'){ ?> value="<?php echo get_option('Type of item to post as default'); ?>" selected=selected" <?php } else { ?> value="Plugins" <?php } ?> >Plugins</option>
+      <option  <?php if(get_option('Type of item to post as default') && get_option('Type of item to post as default')=='tools'){ ?> value="<?php echo get_option('Type of item to post as default'); ?>" selected=selected" <?php } else { ?> value="tools" <?php } ?> >Tools</option>
+      </select>
+    <div>Select the types of nodes to use PhotoLDR.  Revisit this page after setting this for more settings.</div>
+  </div>
+
+  <div style="clear: both;">
+    &nbsp;
+  </div>
 </div>
 
-    <div class="form-item">
-  <label class="labels">Image style </label>
- <select name="image_style" id="image-style">
-     <option  <?php if(get_option('Image style') && get_option('Image style')=='thumbnail'){ ?> value="<?php echo get_option('Image style'); ?>" selected=selected" <?php } else { ?> value="thumbnail" <?php } ?> >thumbnail</option>
-     <option  <?php if(get_option('Image style') && get_option('Image style')=='medium'){ ?> value="<?php echo get_option('Image style'); ?>" selected=selected" <?php } else { ?> value="medium" <?php } ?> >medium</option>
-     <option  <?php if(get_option('Image style') && get_option('Image style')=='large'){ ?> value="<?php echo get_option('Image style'); ?>" selected=selected" <?php } else { ?> value="large" <?php } ?> >large</option>
- </select>
-<div>Select the style of images displayed by PhotoLDR.</div>
-</div>
 
-   <div class="form-item">
-  <label class="labels">Icon style </label>
- <select name="icon_style" id="icon-style">
-     <option  <?php if(get_option('Icon style') && get_option('Icon style')=='thumbnail'){ ?> value="<?php echo get_option('Icon style'); ?>" selected=selected" <?php } else { ?> value="thumbnail" <?php } ?> >thumbnail</option>
-     <option  <?php if(get_option('Icon style') && get_option('Icon style')=='medium'){ ?> value="<?php echo get_option('Icon style'); ?>" selected=selected" <?php } else { ?> value="medium" <?php } ?> >medium</option>
-     <option  <?php if(get_option('Icon style') && get_option('Icon style')=='large'){ ?> value="<?php echo get_option('Icon style'); ?>" selected=selected" <?php } else { ?> value="large" <?php } ?> >large</option>
- </select>
-<div>Select the image style of icon displayed by PhotoLDR.</div>
-</div>
+  <div style="float: left; margin-left: 51px;width: 900px;">
+  <hr/>
+  <h3>Save Settings after changing any above options to refresh the available options bellow.</h3>
+  <input type="submit" id="edit-submit" name="submit" value="Save and Refresh" class="form-submit" />
+  <hr/>
 
-    <div class="form-item">
-  <label class="labels">Type of item to post as default </label>
- <select name="post_type" id="post-type">
+  <?php foreach ($post_types as $post_type){?>
+  <div class="form-item form-type-select form-item-photoldr-node-weight-article">
 
-     <option  <?php if(get_option('Type of item to post as default') && get_option('Type of item to post as default')=='posts'){ ?> value="<?php echo get_option('Type of item to post as default'); ?>" selected=selected" <?php } else { ?> value="posts" <?php } ?> >Posts</option>
-     <option  <?php if(get_option('Type of item to post as default') && get_option('Type of item to post as default')=='pages'){ ?> value="<?php echo get_option('Type of item to post as default'); ?>" selected=selected" <?php } else { ?> value="pages" <?php } ?> >Pages</option>
-     <option  <?php if(get_option('Type of item to post as default') && get_option('Type of item to post as default')=='blog'){ ?> value="<?php echo get_option('Type of item to post as default'); ?>" selected=selected" <?php } else { ?> value="blog" <?php } ?> >Blog</option>
-     <option  <?php if(get_option('Type of item to post as default') && get_option('Type of item to post as default')=='book'){ ?> value="<?php echo get_option('Type of item to post as default'); ?>" selected=selected" <?php } else { ?> value="book" <?php } ?> >Book Page</option>
-     <option  <?php if(get_option('Type of item to post as default') && get_option('Type of item to post as default')=='event'){ ?> value="<?php echo get_option('Type of item to post as default'); ?>" selected=selected" <?php } else { ?> value="event" <?php } ?> >Event</option>
-     <option  <?php if(get_option('Type of item to post as default') && get_option('Type of item to post as default')=='Plugins'){ ?> value="<?php echo get_option('Type of item to post as default'); ?>" selected=selected" <?php } else { ?> value="Plugins" <?php } ?> >Plugins</option>
-     <option  <?php if(get_option('Type of item to post as default') && get_option('Type of item to post as default')=='tools'){ ?> value="<?php echo get_option('Type of item to post as default'); ?>" selected=selected" <?php } else { ?> value="tools" <?php } ?> >Tools</option>
- </select>
-<div>Select the types of nodes to use PhotoLDR.  Revisit this page after setting this for more settings.</div>
-</div>
+    <label for="edit-photoldr-node-weight-article"><?php echo $post_type ?> - Weight</label>
+    <select id="edit-photoldr-node-weight-<?php echo $post_type ?>" name="photoldr_node_weight_<?php echo $post_type ?>" class="form-select">
+         <?php for($pp=1; $pp<=50;$pp++) { ?>
+             <option value="<?php echo $pp;?>" <?php if(get_option("photoldr_node_weight_".$post_type) && get_option("photoldr_node_weight_".$post_type)== $pp ) { ?> selected="selected"  <?php  } else{ if(get_option("photoldr_node_weight_".$post_type)=='') { if($pp==10) { ?> selected="selected" <?php } }} ?> ><?php echo $pp;?> </option>
+         <?php } ?>
+    </select>
 
-    <div style="clear: both;">
-        &nbsp;
-    </div>
-</div>
-
-
-
-
-    <div style="float: left; margin-left: 51px;width: 900px;">
-    <hr/>
-    <h3>Save Settings after changing any above options to refresh the available options bellow.</h3>
-    <input type="submit" id="edit-submit" name="submit" value="Save and Refresh" class="form-submit" />
-    <hr/>
-
- <?php foreach ($post_types as $post_type){?>
- <div class="form-item form-type-select form-item-photoldr-node-weight-article">
-
- <label for="edit-photoldr-node-weight-article"><?php echo $post_type ?> - Weight</label>
- <select id="edit-photoldr-node-weight-<?php echo $post_type ?>" name="photoldr_node_weight_<?php echo $post_type ?>" class="form-select">
-      <?php for($pp=1; $pp<=50;$pp++) { ?>
-          <option value="<?php echo $pp;?>" <?php if(get_option("photoldr_node_weight_".$post_type) && get_option("photoldr_node_weight_".$post_type)== $pp ) { ?> selected="selected"  <?php  } else{ if(get_option("photoldr_node_weight_".$post_type)=='') { if($pp==10) { ?> selected="selected" <?php } }} ?> ><?php echo $pp;?> </option>
-      <?php } ?>
- </select>
-
-<div class="description">This will set the order that node types are presented to the iOS app.</div>
-</div>
+    <div class="description">This will set the order that node types are presented to the iOS app.</div>
+  </div>
 
 <?php } foreach ($post_types as $post_type){?>
-<table>
+  <table>
     <tr>
-            <td class="table_photo_lod">
-                <div class="form-item form-type-select form-item-photoldr-node-view-article photo_lod_div">
-                      <label for="edit-photoldr-node-view-article"><?php echo $post_type ?> - View Type </label>
-                      <select id="edit-photoldr-node-view-<?php echo $post_type ?>" name="photoldr_node_view_<?php echo $post_type ?>" class="form-select">
-                          <option value="table" selected="selected">Table</option>
-                          <option value="map" <?php if(get_option("photoldr_node_view_".$post_type) && get_option("photoldr_node_view_".$post_type) == 'Map -coming soon') {?> selected="selected" <?php }?> >Map -coming soon</option></select>
-                      <div class="description">This will set the view type in the iOS app. CURRENTLY Disabled.  Only Tableview is used no matter what is set.</div>
-               </div>
-           </td>
-           <td class="table_photo_lod">
-               <div class="form-item form-type-select form-item-photoldr-item-max-article photo_lod_div">
-                  <label for="edit-photoldr-item-max-article"><?php echo $post_type ?> - Max items </label>
+      <td class="table_photo_lod">
+        <div class="form-item form-type-select form-item-photoldr-node-view-article photo_lod_div">
+            <label for="edit-photoldr-node-view-article"><?php echo $post_type ?> - View Type </label>
+            <select id="edit-photoldr-node-view-<?php echo $post_type ?>" name="photoldr_node_view_<?php echo $post_type ?>" class="form-select">
+                <option value="table" selected="selected">Table</option>
+                <option value="map" <?php if(get_option("photoldr_node_view_".$post_type) && get_option("photoldr_node_view_".$post_type) == 'Map -coming soon') {?> selected="selected" <?php }?> >Map -coming soon</option></select>
+            <div class="description">This will set the view type in the iOS app. CURRENTLY Disabled.  Only Tableview is used no matter what is set.</div>
+       </div>
+      </td>
+      <td class="table_photo_lod">
+        <div class="form-item form-type-select form-item-photoldr-item-max-article photo_lod_div">
+          <label for="edit-photoldr-item-max-article"><?php echo $post_type ?> - Max items </label>
 
-                 <select id="edit-photoldr-item-max-<?php echo $post_type ?>" name="photoldr_item_max_<?php echo $post_type ?>" class="form-select">
-                     <?php for($pp=1; $pp<=100;$pp++) { ?>
-                     <option value="<?php echo $pp;?>" <?php if(get_option("photoldr_item_max_".$post_type)== $pp ) { ?> selected="selected"  <?php  } else{ if(get_option("photoldr_item_max_".$post_type)=='') {if($pp==15) { ?> selected="selected" <?php } } }?> ><?php echo $pp;?> </option>
-                     <?php } ?>
-                 </select>
-
-                <div class="description">This will set the maximum number of items presented to the user.</div>
-             </div>
-             <div class="form-item form-type-select form-item-photoldr-item-age-max-article photo_lod_div">
-                 <label for="edit-photoldr-item-age-max-article"><?php echo $post_type ?> - Max age (weeks) </label>
-                 <select id="edit-photoldr-item-age-max-<?php echo $post_type ?>" name="photoldr_item_age_max_<?php echo $post_type ?>" class="form-select">
-                 <?php for($pp=0; $pp<=52;$pp++) { ?>
-                     <option value="<?php echo $pp;?>" <?php if(get_option("photoldr_item_age_max_".$post_type) && get_option("photoldr_item_age_max_".$post_type)== $pp ) { ?> selected="selected"  <?php  } else{  if(get_option("photoldr_item_age_max_".$post_type)=='') { if($pp==0) { ?> selected="selected" <?php } } }?> ><?php echo $pp;?> </option>
-                     <?php } ?>
-                 </select>
-
-                <div class="description">This will set the maximum allowable age in weeks of the displayed items.  0 is no max.</div>
-             </div>
-          </td>
-          <td class="table_photo_lod">
-             <div class="form-item form-type-select form-item-photoldr-item-order-article photo_lod_div">
-                <label for="edit-photoldr-item-order-article"><?php echo $post_type ?> - Sort Order </label>
-                <select id="edit-photoldr-item-order-<?php echo $post_type ?>" name="photoldr_item_order_<?php echo $post_type ?>" class="form-select">
-                    <option value="DESC" <?php if(get_option("photoldr_item_order_".$post_type) && get_option("photoldr_item_order_".$post_type) == 'DESC') {?> selected="selected" <?php }?>  >Descending Z-A or Newest First</option>
-                    <option value="ASC"  <?php if(get_option("photoldr_item_order_".$post_type) && get_option("photoldr_item_order_".$post_type) == 'ASC') {?>  selected="selected"  <?php } elseif(get_option("photoldr_item_order_".$post_type) == '') { ?>   selected="selected" <?php } ?> >Ascending A-Z or Oldest First</option></select>
-                <div class="description">This will set the order which items are returned to the App.</div>
-            </div>
-            <div class="form-item form-type-select form-item-photoldr-item-orderby-article photo_lod_div">
-              <label for="edit-photoldr-item-orderby-article"><?php echo $post_type ?> - Sort By </label>
-              <select id="edit-photoldr-item-orderby-<?php echo $post_type ?>" name="photoldr_item_orderby_<?php echo $post_type ?>" class="form-select">
-                  <option value="created" <?php if(get_option("photoldr_item_orderby_".$post_type) && get_option("photoldr_item_orderby_".$post_type) == 'created') {?>  selected="selected" <?php }?>  >Created</option>
-                  <option value="changed" <?php if(get_option("photoldr_item_orderby_".$post_type) && get_option("photoldr_item_orderby_".$post_type) == 'changed') {?>  selected="selected" <?php }?>  >Changed</option>
-                  <option value="title"   <?php if(get_option("photoldr_item_orderby_".$post_type) && get_option("photoldr_item_orderby_".$post_type) == 'title') {?>    selected="selected" <?php }  elseif(get_option("photoldr_item_orderby_".$post_type) == '') { ?> selected="selected"  <?php } ?> >Title</option>
-                  <option value="nid"     <?php if(get_option("photoldr_item_orderby_".$post_type) && get_option("photoldr_item_orderby_".$post_type) == 'nid') {?>      selected="selected" <?php }?>  >Node ID</option>
-              </select>
-              <div class="description">This will set the field used to sort.</div>
-           </div>
-         </td>
+          <select id="edit-photoldr-item-max-<?php echo $post_type ?>" name="photoldr_item_max_<?php echo $post_type ?>" class="form-select">
+             <?php for($pp=1; $pp<=100;$pp++) { ?>
+             <option value="<?php echo $pp;?>" <?php if(get_option("photoldr_item_max_".$post_type)== $pp ) { ?> selected="selected"  <?php  } else{ if(get_option("photoldr_item_max_".$post_type)=='') {if($pp==15) { ?> selected="selected" <?php } } }?> ><?php echo $pp;?> </option>
+             <?php } ?>
+          </select>
+          <div class="description">This will set the maximum number of items presented to the user.</div>
+        </div>
+        <div class="form-item form-type-select form-item-photoldr-item-age-max-article photo_lod_div">
+            <label for="edit-photoldr-item-age-max-article"><?php echo $post_type ?> - Max age (weeks) </label>
+            <select id="edit-photoldr-item-age-max-<?php echo $post_type ?>" name="photoldr_item_age_max_<?php echo $post_type ?>" class="form-select">
+            <?php for($pp=0; $pp<=52;$pp++) { ?>
+                <option value="<?php echo $pp;?>" <?php if(get_option("photoldr_item_age_max_".$post_type) && get_option("photoldr_item_age_max_".$post_type)== $pp ) { ?> selected="selected"  <?php  } else{  if(get_option("photoldr_item_age_max_".$post_type)=='') { if($pp==0) { ?> selected="selected" <?php } } }?> ><?php echo $pp;?> </option>
+                <?php } ?>
+            </select>
+           <div class="description">This will set the maximum allowable age in weeks of the displayed items.  0 is no max.</div>
+        </div>
+      </td>
+      <td class="table_photo_lod">
+        <div class="form-item form-type-select form-item-photoldr-item-order-article photo_lod_div">
+           <label for="edit-photoldr-item-order-article"><?php echo $post_type ?> - Sort Order </label>
+           <select id="edit-photoldr-item-order-<?php echo $post_type ?>" name="photoldr_item_order_<?php echo $post_type ?>" class="form-select">
+               <option value="DESC" <?php if(get_option("photoldr_item_order_".$post_type) && get_option("photoldr_item_order_".$post_type) == 'DESC') {?> selected="selected" <?php }?>  >Descending Z-A or Newest First</option>
+               <option value="ASC"  <?php if(get_option("photoldr_item_order_".$post_type) && get_option("photoldr_item_order_".$post_type) == 'ASC') {?>  selected="selected"  <?php } elseif(get_option("photoldr_item_order_".$post_type) == '') { ?>   selected="selected" <?php } ?> >Ascending A-Z or Oldest First</option></select>
+           <div class="description">This will set the order which items are returned to the App.</div>
+        </div>
+        <div class="form-item form-type-select form-item-photoldr-item-orderby-article photo_lod_div">
+          <label for="edit-photoldr-item-orderby-article"><?php echo $post_type ?> - Sort By </label>
+          <select id="edit-photoldr-item-orderby-<?php echo $post_type ?>" name="photoldr_item_orderby_<?php echo $post_type ?>" class="form-select">
+              <option value="created" <?php if(get_option("photoldr_item_orderby_".$post_type) && get_option("photoldr_item_orderby_".$post_type) == 'created') {?>  selected="selected" <?php }?>  >Created</option>
+              <option value="changed" <?php if(get_option("photoldr_item_orderby_".$post_type) && get_option("photoldr_item_orderby_".$post_type) == 'changed') {?>  selected="selected" <?php }?>  >Changed</option>
+              <option value="title"   <?php if(get_option("photoldr_item_orderby_".$post_type) && get_option("photoldr_item_orderby_".$post_type) == 'title') {?>    selected="selected" <?php }  elseif(get_option("photoldr_item_orderby_".$post_type) == '') { ?> selected="selected"  <?php } ?> >Title</option>
+              <option value="nid"     <?php if(get_option("photoldr_item_orderby_".$post_type) && get_option("photoldr_item_orderby_".$post_type) == 'nid') {?>      selected="selected" <?php }?>  >Node ID</option>
+          </select>
+          <div class="description">This will set the field used to sort.</div>
+        </div>
+      </td>
     </tr>
-</table>
+  </table>
 
 <?php } ?>
 
-    <input type="submit" id="edit-submit" name="submit" value="Save configuration" class="form-submit" />
-    </div>
+  <input type="submit" id="edit-submit" name="submit" value="Save configuration" class="form-submit" />
+  </div>
 </form>
 <?php
 }
