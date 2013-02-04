@@ -504,10 +504,6 @@ function generateXML() {
       echo htmlspecialchars($key->post_content);
       echo "</body>";
 
-      echo "<last_comment_id>";
-      echo $comment[0]->comment_ID;
-      echo "</last_comment_id>";
-
       echo "<last_comment_timestamp>";
       echo $comment[0]->comment_date;
       echo "</last_comment_timestamp>";
@@ -520,9 +516,9 @@ function generateXML() {
       echo $comment[0]->user_id;
       echo "</last_comment_uid>";
 
-      echo "<last_comment_content>";
+      echo "<comment>";
       echo htmlspecialchars($comment[0]->comment_content);
-      echo "</last_comment_content>";
+      echo "</comment>";
 
       echo "<comment_count>";
       echo $key->comment_count;
@@ -620,10 +616,6 @@ function generateXML() {
       echo htmlspecialchars($key->post_content);
       echo "</body>";
 
-      echo "<last_comment_id>";
-      echo $comment[0]->comment_ID;
-      echo "</last_comment_id>";
-
       echo "<last_comment_timestamp>";
       echo $comment[0]->comment_date;
       echo "</last_comment_timestamp>";
@@ -636,9 +628,9 @@ function generateXML() {
       echo $comment[0]->user_id;
       echo "</last_comment_uid>";
 
-      echo "<last_comment_content>";
+      echo "<comment>";
       echo htmlspecialchars($comment[0]->comment_content);
-      echo "</last_comment_content>";
+      echo "</comment>";
 
       echo "<comment_count>";
       echo $key->comment_count;
@@ -1014,10 +1006,6 @@ function photoldr_postdata() {
     echo htmlspecialchars($node->post_content);
     echo "</body>";
 
-    echo "<last_comment_id>";
-    echo $comment[0]->comment_ID;
-    echo "</last_comment_id>";
-
     echo "<last_comment_timestamp>";
     echo $comment[0]->comment_date;
     echo "</last_comment_timestamp>";
@@ -1030,9 +1018,9 @@ function photoldr_postdata() {
     echo $comment[0]->user_id;
     echo "</last_comment_uid>";
 
-    echo "<last_comment_content>";
+    echo "<comment>";
     echo htmlspecialchars($comment[0]->comment_content);
-    echo "</last_comment_content>";
+    echo "</comment>";
 
     echo "<comment_count>";
     echo $key->comment_count;
