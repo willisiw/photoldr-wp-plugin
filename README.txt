@@ -14,8 +14,22 @@ PhotoLDR iOS app and WordPress plug-in together allow a WordPress site administr
 
 == Installation ==
 
-Extract the zip file and just drop the contents in the wp-content/plugins/ directory of your WordPress installation and then activate the Plugin from Plugins page.
+1. Download the zip file from https://github.com/willisiw/photoldr-wp-plugin/archive/master.zip
+
+2. Navigate to Dashboard > Plugins > Add New > Upload
+ ie. example.com/wp-admin/plugin-install.php?tab=upload
+ 
+3. Select the downloaded zip file and click Install Now.
+
+4. Click Activate Plugin.
+
+5. Navigate to Dashboard > Settings > PhotoLDR
+ ie. example.com/wp-admin/options-general.php?page=photoldr
+ 
+6. Customize and Save.
+
 == Changelog ==
+
 Added the option to have an app banner on iOS devices.
 
 ==Readme Generator== 
