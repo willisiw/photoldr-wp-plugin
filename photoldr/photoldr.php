@@ -338,7 +338,7 @@ function generateXML() {
   // start form_items loop
   echo"<form_items>\n";
   foreach($posttypeselect as $kef=>$type) {
-    $useredit = check_role($uid,$type);
+    $useredit = check_role($uid, $type);
     if($useredit) {
        echo "<option>";echo $type.':Hidden:posturl:'.$pub['post_url'];echo "</option>\n";
     }
@@ -382,25 +382,28 @@ function generateXML() {
   echo"</node_types>";
 
 
-  // User start user count loop.
-  echo"<user count='$coutuser'>\n";
-    for($k=0;$k<$coutuser;$k++) {
-      echo "<uid>";
-      echo $totaluser[$k]->ID ;
-      echo "</uid>";
-      echo "<name>";
-      echo $totaluser[$k]->user_nicename;
-      echo "</name>";
-      echo "<mail>";
-      echo $totaluser[$k]->user_email;
-      echo "</mail>";
-      echo "<created>";
-      echo $totaluser[$k]->user_registered;
-      echo "</created>";
-      echo "<status>";
-      echo $totaluser[$k]->user_status;
-      echo "</status>";
-    }
+  // User information.
+  echo"<user>\n";
+  if ($uid != FALSE) {
+    $user_info = get_userdata($uid);
+    echo "<uid>";
+    echo $uid;
+    echo "</uid>";
+    echo "<name>";
+    echo $user_info->display_name;
+    echo "</name>";
+    echo "<mail>";
+    echo $user_info->user_email;
+    echo "</mail>";
+    echo "<created>";
+    echo $user_info->user_registered;
+    echo "</created>";
+  } else {
+    // anonymous user.
+    echo "<uid/>";
+    echo "<name/>";
+    echo "<mail/>";
+  }
   echo"</user>";
 
 
@@ -447,6 +450,7 @@ function generateXML() {
       echo "<node>\n";
 
       $useredit = check_role($uid, $posttype);
+      $user_info = get_userdata($key->post_author);
       if($useredit) {
         echo "<userdelete>";
         echo "1";
@@ -456,6 +460,9 @@ function generateXML() {
         echo "1";
         echo "</useredit>";
       }
+      // echo "<raw>";
+      // echo htmlspecialchars(print_r($key, TRUE));
+      // echo "</raw>";
 
       echo "<uid>";
       echo $key->post_author;
@@ -505,7 +512,6 @@ function generateXML() {
       echo $comment[0]->comment_author;
       echo "</last_comment_name>";
 
-
       echo "<last_comment_uid>";
       echo $comment[0]->user_id;
       echo "</last_comment_uid>";
@@ -515,8 +521,12 @@ function generateXML() {
       echo "</comment_count>";
 
       echo "<name>";
-      echo $data['username'];
+      echo $user_info->display_name;
       echo "</name>";
+
+      echo "<nurl>";
+      echo htmlspecialchars($key->guid);
+      echo "</nurl>";
 
       echo "</node>";
 
@@ -557,6 +567,7 @@ function generateXML() {
       echo "<node>\n";
 
       $useredit = check_role($uid,$posttype);
+      $user_info = get_userdata($key->post_author);
       if($useredit) {
         echo "<userdelete>";
         echo "1";
@@ -626,8 +637,12 @@ function generateXML() {
       echo "</comment_count>";
 
       echo "<name>";
-      echo $data['username'];
+      echo $user_info->display_name;
       echo "</name>";
+
+      echo "<nurl>";
+      echo htmlspecialchars($key->guid);
+      echo "</nurl>";
 
       echo "</node>";
 
@@ -769,6 +784,7 @@ function photoldr_postdata() {
 
   // get the uid
   $uid = photoldr_user_auth();
+  $user_info = get_userdata($key->post_author);
 
   if ($uid == FALSE) {
     return;
@@ -890,7 +906,7 @@ function photoldr_postdata() {
   }
 
   // for replace the image
-  if($image_overwrite!= FALSE) {      
+  if($image_overwrite!= FALSE) {
     if (preg_match('/img*/i', $node->post_content)) {
       $content = explode("<",$node->post_content);
       $node->post_content = $content[0];
@@ -909,16 +925,16 @@ function photoldr_postdata() {
     // Concatinate ine image with body
     $node->post_content .= $htmlimg;
   }
-  
+
    $subject = explode("\\",$node->post_content);
-   
+
    if(!empty($subject)){
-       
+
    $node->post_content = str_replace('\\', '', $node->post_content);
-   
+
    }
-   
-   
+
+
   //Create new post if new otherwise update
   if($nid=='new') {
       //$temp = $nid;
@@ -932,9 +948,9 @@ function photoldr_postdata() {
   if ($uid == 1) {
     $testdata1 = '';
     $testdata  = $node;
-    
+
     $testdata2  = $data;
-    
+
     //$testdata3  = $temp;
     if(isset($_FILES)) {
         $testdata1 = $_FILES;
@@ -943,11 +959,11 @@ function photoldr_postdata() {
     //$testdata['password']= 0;
     $wp_root_path = str_replace('/wp-content/themes', '', get_theme_root());
     $handle = fopen($wp_root_path . "/postdata.txt", "a");
-    
+
     fwrite($handle, 'Post data \n' . print_r($testdata2, TRUE) . '  ');
     fwrite($handle, 'Data: \n' . print_r($testdata, TRUE) . '  ');
-    fwrite($handle, 'Image section \n' . print_r($testdata1, TRUE) . '  ');   
-    
+    fwrite($handle, 'Image section \n' . print_r($testdata1, TRUE) . '  ');
+
     //fwrite($handle, 'nid \n' . print_r($testdata3, TRUE) . '  ');
     fclose($handle);
   }
@@ -1030,8 +1046,12 @@ function photoldr_postdata() {
     echo "</comment_count>";
 
     echo "<name>";
-    echo $data['username'];
+    echo $user_info->display_name;
     echo "</name>";
+
+    echo "<nurl>";
+    echo htmlspecialchars($key->guid);
+    echo "</nurl>";
 
     echo "</node>";
     echo "</nodes>";
@@ -1039,7 +1059,7 @@ function photoldr_postdata() {
     echo "</domain>";
     echo "</domains>";
   }
-  
+
   exit;
 }
 
@@ -1058,7 +1078,7 @@ function photoldr_user_auth() {
   }
   else
   {
-       $uid = get_current_user_id();
+    $uid = get_current_user_id();
   }
 
   // Authenticate the user.
@@ -1109,7 +1129,7 @@ function photoldr_images_process($ntype, $uid) {
   // Traversing $_FILES one by one and return image tag
   $imagehtml = array();
   $i = "0";
-  
+
   foreach ($_FILES as $k => $v) {
     // object of php standard class
     $src            = new stdClass();
@@ -1131,7 +1151,7 @@ function photoldr_images_process($ntype, $uid) {
       // If image validate, move image to permanent location
       $filename       = file_munge($filenames, $extensions1, FALSE);
       $file_copy      = move_uploaded_file($src->uri, $wp_root_path.'/postimg/'.$filename);
-      
+
       $imgurl         = get_site_url()."/postimg/".$filename;
       $imagehtml[$i]  =  "<img src='$imgurl'/>";
     }
