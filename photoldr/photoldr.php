@@ -350,14 +350,14 @@ function generateXML() {
        echo "<option>";echo $type.':'.'Replace Photos'.':'.'image_overwrite'.':'.'checkbox';echo "</option>";
     }
   }
-  echo"</form_items>";
+  echo "</form_items>";
 
 
   // node_types option loop
   $countnode  = 0;
   $countnode1 = 0;
-  echo"<node_types>\n";
-  foreach($posttypeselect as $kef=>$type) {
+  echo "<node_types>\n";
+  foreach ($posttypeselect as $kef=>$type) {
     echo "<option>";
     echo $type .":table" ;
     echo "</option>";
@@ -379,11 +379,11 @@ function generateXML() {
     $countnode1 += count($allpost1->posts);
    }
 
-  echo"</node_types>";
+  echo "</node_types>";
 
 
   // User information.
-  echo"<user>\n";
+  echo "<user>\n";
   if ($uid != FALSE) {
     $user_info = get_userdata($uid);
     echo "<uid>";
@@ -409,16 +409,16 @@ function generateXML() {
 
 
   // Start nodes loop.
-  echo"<nodes  count='$countnode'>\n";
+  echo "<nodes  count='$countnode'>\n";
   // Sort the post types according to there weight
-  $newarray= array();
+  $newarray = array();
   $K = 0;
   foreach($posttypeselect as $kef=>$nodeweight){
    $newarray[$K]['post']   = $nodeweight;
    $newarray[$K]['weight'] = get_option("photoldr_node_weight_".$nodeweight);
    $K++;
    }
-  $post_sort =  array_sort($newarray, 'weight', $order=SORT_DESC);
+  $post_sort = array_sort($newarray, 'weight', $order=SORT_DESC);
 
   // Traverse the sort array in foreach loop
   foreach ($post_sort as $key=>$value) {
@@ -468,15 +468,17 @@ function generateXML() {
       echo $key->post_author;
       echo "</uid>";
 
-      echo "<title>";
-      echo htmlspecialchars($key->post_title);
-      echo "</title>";
+      echo "<name>";
+      echo $user_info->display_name;
+      echo "</name>";
+
+      echo "<nurl>";
+      echo htmlspecialchars($key->guid);
+      echo "</nurl>";
 
       echo "<status>";
       echo '1';
       echo "</status>";
-
-
 
       echo "<nid>";
       echo $key->ID;
@@ -494,17 +496,17 @@ function generateXML() {
       echo $key->post_modified;
       echo "</changed>";
 
+      echo "<title>";
+      echo htmlspecialchars($key->post_title);
+      echo "</title>";
+
       echo "<body>";
       echo htmlspecialchars($key->post_content);
       echo "</body>";
 
-      echo "<comment>";
-      echo $key->comment_count;
-      echo "</comment>";
-
-      echo "<cid>";
+      echo "<last_comment_id>";
       echo $comment[0]->comment_ID;
-      echo "</cid>";
+      echo "</last_comment_id>";
 
       echo "<last_comment_timestamp>";
       echo $comment[0]->comment_date;
@@ -518,17 +520,13 @@ function generateXML() {
       echo $comment[0]->user_id;
       echo "</last_comment_uid>";
 
+      echo "<last_comment_content>";
+      echo htmlspecialchars($comment[0]->comment_content);
+      echo "</last_comment_content>";
+
       echo "<comment_count>";
       echo $key->comment_count;
       echo "</comment_count>";
-
-      echo "<name>";
-      echo $user_info->display_name;
-      echo "</name>";
-
-      echo "<nurl>";
-      echo htmlspecialchars($key->guid);
-      echo "</nurl>";
 
       echo "</node>";
 
@@ -584,9 +582,13 @@ function generateXML() {
       echo $key->post_author;
       echo "</uid>";
 
-      echo "<title>";
-      echo htmlspecialchars($key->post_title);
-      echo "</title>";
+      echo "<name>";
+      echo $user_info->display_name;
+      echo "</name>";
+
+      echo "<nurl>";
+      echo htmlspecialchars($key->guid);
+      echo "</nurl>";
 
       echo "<status>";
       echo '0';
@@ -610,17 +612,17 @@ function generateXML() {
       echo $key->post_modified;
       echo "</changed>";
 
+      echo "<title>";
+      echo htmlspecialchars($key->post_title);
+      echo "</title>";
+
       echo "<body>";
       echo htmlspecialchars($key->post_content);
       echo "</body>";
 
-      echo "<comment>";
-      echo $key->comment_count;
-      echo "</comment>";
-
-      echo "<cid>";
+      echo "<last_comment_id>";
       echo $comment[0]->comment_ID;
-      echo "</cid>";
+      echo "</last_comment_id>";
 
       echo "<last_comment_timestamp>";
       echo $comment[0]->comment_date;
@@ -634,17 +636,13 @@ function generateXML() {
       echo $comment[0]->user_id;
       echo "</last_comment_uid>";
 
+      echo "<last_comment_content>";
+      echo htmlspecialchars($comment[0]->comment_content);
+      echo "</last_comment_content>";
+
       echo "<comment_count>";
       echo $key->comment_count;
       echo "</comment_count>";
-
-      echo "<name>";
-      echo $user_info->display_name;
-      echo "</name>";
-
-      echo "<nurl>";
-      echo htmlspecialchars($key->guid);
-      echo "</nurl>";
 
       echo "</node>";
 
@@ -974,9 +972,13 @@ function photoldr_postdata() {
     echo $uid;
     echo "</uid>";
 
-    echo "<title>";
-    echo htmlspecialchars($node->post_title);
-    echo "</title>";
+    echo "<name>";
+    echo $user_info->display_name;
+    echo "</name>";
+
+    echo "<nurl>";
+    echo htmlspecialchars($key->guid);
+    echo "</nurl>";
 
     echo "<status>";
     echo '1';
@@ -1004,17 +1006,17 @@ function photoldr_postdata() {
     echo date("Y-m-d H:i");
     echo "</revision_timestamp>";
 
+    echo "<title>";
+    echo htmlspecialchars($node->post_title);
+    echo "</title>";
+
     echo "<body>";
     echo htmlspecialchars($node->post_content);
     echo "</body>";
 
-    echo "<comment>";
-    echo $key->comment_count;
-    echo "</comment>";
-
-    echo "<cid>";
+    echo "<last_comment_id>";
     echo $comment[0]->comment_ID;
-    echo "</cid>";
+    echo "</last_comment_id>";
 
     echo "<last_comment_timestamp>";
     echo $comment[0]->comment_date;
@@ -1028,17 +1030,13 @@ function photoldr_postdata() {
     echo $comment[0]->user_id;
     echo "</last_comment_uid>";
 
+    echo "<last_comment_content>";
+    echo htmlspecialchars($comment[0]->comment_content);
+    echo "</last_comment_content>";
+
     echo "<comment_count>";
     echo $key->comment_count;
     echo "</comment_count>";
-
-    echo "<name>";
-    echo $user_info->display_name;
-    echo "</name>";
-
-    echo "<nurl>";
-    echo htmlspecialchars($key->guid);
-    echo "</nurl>";
 
     echo "</node>";
     echo "</nodes>";
