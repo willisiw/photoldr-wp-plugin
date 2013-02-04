@@ -926,51 +926,24 @@ function photoldr_postdata() {
     $node->post_content .= $htmlimg;
   }
 
-   $subject = explode("\\",$node->post_content);
+  $subject = explode("\\",$node->post_content);
 
-   if(!empty($subject)){
-
-   $node->post_content = str_replace('\\', '', $node->post_content);
-
-   }
+  if(!empty($subject)){
+    $node->post_content = str_replace('\\', '', $node->post_content);
+  }
 
 
   //Create new post if new otherwise update
-  if($nid=='new') {
-      //$temp = $nid;
+  if($nid == 'new') {
     $nid   = wp_insert_post($node);
   }
   else {
-      //$temp = 'update';
     $nid   = wp_update_post($node);
-  }
-
-  if ($uid == 1) {
-    $testdata1 = '';
-    $testdata  = $node;
-
-    $testdata2  = $data;
-
-    //$testdata3  = $temp;
-    if(isset($_FILES)) {
-        $testdata1 = $_FILES;
-    }
-
-    //$testdata['password']= 0;
-    $wp_root_path = str_replace('/wp-content/themes', '', get_theme_root());
-    $handle = fopen($wp_root_path . "/postdata.txt", "a");
-
-    fwrite($handle, 'Post data \n' . print_r($testdata2, TRUE) . '  ');
-    fwrite($handle, 'Data: \n' . print_r($testdata, TRUE) . '  ');
-    fwrite($handle, 'Image section \n' . print_r($testdata1, TRUE) . '  ');
-
-    //fwrite($handle, 'nid \n' . print_r($testdata3, TRUE) . '  ');
-    fclose($handle);
   }
 
   $countnode = 1;
 
-      // Genrate XML to return
+  // Genrate XML to return after post.
   if ($nid) {
     header('Content-type: text/xml');
     echo '<?xml version="1.0" encoding="UTF-8"?>'."\n";
