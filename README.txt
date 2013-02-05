@@ -3,16 +3,37 @@ Contributors: Ian Willis
 Donate link:www.627co.com
 Tags: CMS, iOS, iPhone, iPad
 Requires at least: 3
-Tested up to: 3.51
+Tested up to: 3.61
 Stable tag: trunk
+License: GPLv2 or later
+License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
 PhotoLDR iOS app and WordPress plug-in together allow a WordPress site administrator to easily add/update/remove content and photos from a site.
 
 == Description ==
 
-<p style=\"margin: 0px 0px 15px; padding: 0px; border: 0px; color: #333333; font-family: Helvetica, arial, freesans, clean, sans-serif; font-size: 14px; line-height: 22px;\">PhotoLDR WordPress Plugin.<p style=\"margin: 15px 0px; padding: 0px; border: 0px; color: #333333; font-family: Helvetica, arial, freesans, clean, sans-serif; font-size: 14px; line-height: 22px;\">PhotoLDR iOS app and WordPress plug-in together allow a WordPress site administrator to easily add/update/remove content and photos from a site.</p> <p style=\"margin: 15px 0px; padding: 0px; border: 0px; color: #333333; font-family: Helvetica, arial, freesans, clean, sans-serif; font-size: 14px; line-height: 22px;\">This plugin will allow a WordPress site to be managed via the PhotoLDR iOS app.</p> <p style=\"margin: 15px 0px; padding: 0px; border: 0px; color: #333333; font-family: Helvetica, arial, freesans, clean, sans-serif; font-size: 14px; line-height: 22px;\">WordPress Site administrators can manage the content that will be displayed in the iOS app.</p> <p style=\"margin: 15px 0px; padding: 0px; border: 0px; color: #333333; font-family: Helvetica, arial, freesans, clean, sans-serif; font-size: 14px; line-height: 22px;\">More info about the iOS app can be found here:</p> <p style=\"margin: 15px 0px; padding: 0px; border: 0px; color: #333333; font-family: Helvetica, arial, freesans, clean, sans-serif; font-size: 14px; line-height: 22px;\"><a href=\"http://www.photoldr.com/\">http://www.PhotoLDR.com</a></p> <p style=\"margin: 15px 0px; padding: 0px; border: 0px; color: #333333; font-family: Helvetica, arial, freesans, clean, sans-serif; font-size: 14px; line-height: 22px;\">Demo WordPress PhotoLDR site:</p> <p style=\"margin: 15px 0px; padding: 0px; border: 0px; color: #333333; font-family: Helvetica, arial, freesans, clean, sans-serif; font-size: 14px; line-height: 22px;\"><a href=\"http://wp.photoldr.com/\">http://wp.PhotoLDR.com</a></p> <p style=\"margin: 15px 0px; padding: 0px; border: 0px; color: #333333; font-family: Helvetica, arial, freesans, clean, sans-serif; font-size: 14px; line-height: 22px;\">The iOS app is here:</p> <p style=\"margin-top: 15px; margin-right: 0px; margin-left: 0px; padding: 0px; border: 0px; color: #333333; font-family: Helvetica, arial, freesans, clean, sans-serif; font-size: 14px; line-height: 22px; margin-bottom: 0px !important;\"><a href=\"http://itunes.apple.com/us/app/photoldr/id555194288?ls=1&mt=8\">http://itunes.apple.com/us/app/photoldr/id555194288?ls=1&mt=8</a></p> </p>
+PhotoLDR WordPress Plugin. 
+
+PhotoLDR iOS app and WordPress plug-in together allow a WordPress site administrator to easily add/update/remove content and photos from a site.
+
+This plugin will allow a WordPress site to be managed via the PhotoLDR iOS app.
+
+WordPress Site administrators can manage the content that will be displayed in the iOS app.
+
+More info about the iOS app can be found here:
+
+http://www.PhotoLDR.com
+
+Demo WordPress PhotoLDR site:
+
+http://wp.PhotoLDR.com
+
+The iOS app is here
+
+http://itunes.apple.com/us/app/photoldr/id555194288?ls=1&mt=8
 
 == Installation ==
+
 
 1. Download the zip file from https://github.com/willisiw/photoldr-wp-plugin/archive/master.zip
 
@@ -28,10 +49,20 @@ PhotoLDR iOS app and WordPress plug-in together allow a WordPress site administr
  
 6. Customize and Save.
 
-== Changelog ==
+== Frequently asked questions ==
 
-Added the option to have an app banner on iOS devices.
+= A question that someone might have =
 
-==Readme Generator== 
+Where is my data going?
 
-This Readme file was generated using <a href = 'http://sudarmuthu.com/wordpress/wp-readme'>wp-readme</a>, which generates readme files for WordPress Plugins.
+Your web site content is being formatted in XML so that the iPhone app can read it.  The iPhone app will be able to read the XML and store that information in your iOS device, making it easy to access and modify from your iPhone or iPad.
+
+Do you collect any data?
+
+Currently we do not collect any data from sites.  We do plan to track usage, but not collect data.
+
+Can someone else get to my data?
+
+No more than they can by visiting your web site.  you can see all of the data that is presented in the XML docment on your site by navigating to the Dashboard > Settings > PhotoLDR, then clicking the XML data link at the top of that screen.
+
+
